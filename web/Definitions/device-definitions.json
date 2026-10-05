@@ -1,10 +1,10 @@
 [
   {
     "deviceType": 0,
-    "defaultId" : "0x0DE",
+    "defaultId": "0x0DE",
     "typeName": "dingoPDM",
     "icon": "Bolt",
-    "signalsFile" : "dingopdm-signals.json",
+    "signalsFile": "dingopdm-signals.json",
     "numDigitalInputs": 2,
     "numDigitalOutputs": 0,
     "numAnalogInputs": 0,
@@ -25,14 +25,16 @@
     "canBootloader": true,
     "minMajorVersion": 0,
     "minMinorVersion": 5,
-    "minBuildVersion": 1
+    "minBuildVersion": 1,
+    "numTimers": 8,
+    "hasIgnition": true
   },
   {
     "deviceType": 1,
-    "defaultId" : "0x0DE",
+    "defaultId": "0x0DE",
     "typeName": "dingoPDM-Max",
     "icon": "OfflineBolt",
-    "signalsFile" : "dingopdm-max-signals.json",
+    "signalsFile": "dingopdm-max-signals.json",
     "numDigitalInputs": 2,
     "numDigitalOutputs": 0,
     "numAnalogInputs": 0,
@@ -53,14 +55,16 @@
     "canBootloader": true,
     "minMajorVersion": 0,
     "minMinorVersion": 5,
-    "minBuildVersion": 1
+    "minBuildVersion": 1,
+    "numTimers": 8,
+    "hasIgnition": true
   },
   {
     "deviceType": 2,
-    "defaultId" : "0x0DE",
+    "defaultId": "0x0DE",
     "typeName": "PT-DPDM",
     "icon": "PTDPDM.svg",
-    "signalsFile" : "pt-dpdm-signals.json",
+    "signalsFile": "pt-dpdm-signals.json",
     "numDigitalInputs": 2,
     "numDigitalOutputs": 0,
     "numAnalogInputs": 2,
@@ -81,14 +85,16 @@
     "canBootloader": true,
     "minMajorVersion": 0,
     "minMinorVersion": 5,
-    "minBuildVersion": 1
+    "minBuildVersion": 1,
+    "numTimers": 8,
+    "hasIgnition": true
   },
   {
     "deviceType": 3,
-    "defaultId" : "0x640",
+    "defaultId": "0x640",
     "typeName": "CANBoard",
     "icon": "DeveloperBoard",
-    "signalsFile" : "canboard-signals.json",
+    "signalsFile": "canboard-signals.json",
     "numDigitalInputs": 8,
     "numDigitalOutputs": 4,
     "numAnalogInputs": 5,
@@ -109,6 +115,8 @@
     "canBootloader": false,
     "minMajorVersion": 0,
     "minMinorVersion": 5,
-    "minBuildVersion": 1
+    "minBuildVersion": 1,
+    "numTimers": 0,
+    "hasIgnition": false
   }
 ]
