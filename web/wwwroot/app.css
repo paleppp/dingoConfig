@@ -105,3 +105,19 @@ h1:focus {
     margin-right: 6px;
     border-radius: 2px;
 }
+
+/* Blocks built by a vehicle function or switched by an ignition role. They are
+   greyed out and locked in the general grids; the first column keeps its
+   tooltip saying what manages them. */
+.managed-row td {
+    opacity: 0.45;
+}
+
+.managed-row td:not(:first-child) {
+    pointer-events: none;
+}
+
+/* Vehicle functions and the Ignition tab: label / control rows */
+.vf-muted {
+    color: var(--mud-palette-text-secondary);
+}
