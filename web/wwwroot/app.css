@@ -269,6 +269,33 @@ h1:focus {
     grid-template-columns: repeat(auto-fill, 180px);
 }
 
+.dash-grid-wide {
+    grid-template-columns: repeat(auto-fill, 300px);
+}
+
+/* What switches an output, when it is not its own input */
+.dash-owner {
+    margin-top: -4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    color: var(--dash-muted);
+}
+
+.dash-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    font-size: 0.76rem;
+    color: var(--dash-muted);
+}
+
+.dash-facts b {
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+}
+
 /* A status light: off by default, lit by the state class of the tile around it */
 .dash-led {
     flex: 0 0 auto;
@@ -441,6 +468,16 @@ h1:focus {
 
 .dash-sig .sparkline {
     grid-column: 1 / -1;
+}
+
+/* Timers and CAN messages are not reported live, so they show their settings */
+.dash-setting {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.dash-setting .dash-note {
+    grid-column: 1 / -1;
+    font-size: 0.7rem;
 }
 
 .dash-val {

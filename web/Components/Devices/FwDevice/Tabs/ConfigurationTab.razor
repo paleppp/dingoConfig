@@ -122,7 +122,7 @@
         @* Vehicle functions *@
         @if (Device.Outputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Vehicle functions ({VehicleFunctionService.AllFunctions(Device).Count()})")"
+            <MudExpansionPanel Text="@($"Vehicle functions ({VehicleFunctionService.AllFunctions(Device).Count()})")" Class="cfg-vehicle-functions"
                                ExpandedChanged="@((bool expanded) => _vehicleFunctionsExpanded = expanded)">
                 @if (_vehicleFunctionsExpanded)
                 {
@@ -296,7 +296,7 @@
         @* Timers *@
         @if (Device.Timers.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Timers ({Device.Timers.Count})")"
+            <MudExpansionPanel Text="@($"Timers ({Device.Timers.Count})")" Class="cfg-timers"
                                ExpandedChanged="@((bool expanded) => _timersExpanded = expanded)">
                 @if (_timersExpanded)
                 {
@@ -308,7 +308,7 @@
         @* CAN Messages *@
         @if (Device.CanMessages.Count > 0)
         {
-            <MudExpansionPanel Text="@($"CAN Messages ({Device.CanMessages.Count})")"
+            <MudExpansionPanel Text="@($"CAN Messages ({Device.CanMessages.Count})")" Class="cfg-can-messages"
                                ExpandedChanged="@((bool expanded) => _canMessagesExpanded = expanded)">
                 @if (_canMessagesExpanded)
                 {

@@ -1,5 +1,6 @@
 @using domain.Enums
 @using domain.Devices.Functions
+@using domain.Devices.VehicleFunctions
 @using Microsoft.AspNetCore.Components.Web
 @typeparam TDevice where TDevice : domain.Devices.FwDevice
 
@@ -67,6 +68,39 @@
         </div>
     }
 
+    @* Ignition *@
+    @if (Device.Def.HasIgnition && (Device.Ignition.Enabled || _showDisabled))
+    {
+        var ign = Device.Ignition;
+        var state = (IgnitionState)ign.State;
+        <section>
+            @Head("Ignition", 1, 1)
+            <div class="dash-grid dash-grid-wide">
+                <div class="dash-out @IgnitionClass(state) @Off(ign.Enabled) @Linked"
+                     @attributes="@Link(new ConfigTarget("ignition"), "Ignition")">
+                    <div class="dash-row">
+                        <span class="dash-led"></span>
+                        <span class="dash-name">@ign.Name</span>
+                        <span class="dash-badge">@IgnitionText(state)</span>
+                    </div>
+                    <div class="dash-facts">
+                        <span>Dash <b>@DashText(ign.DashState)</b></span>
+                        <span>@SleepText(ign)</span>
+                        @if (ign.MasterLink != 0)
+                        {
+                            <span class="@(ign.MasterLink == 1 ? "" : "dash-warn")">@(ign.MasterLink == 1 ? "Master online" : "Master lost")</span>
+                        }
+                        @if ((ign.WakeSource & 0x80) != 0)
+                        {
+                            <span>Woken by @WakeText(ign.WakeSource)</span>
+                        }
+                    </div>
+                    <Sparkline Source="ign" Property="@nameof(Ignition.State)" Width="274" Height="26"/>
+                </div>
+            </div>
+        </section>
+    }
+
     @* Outputs *@
     @if (Visible(Device.Outputs, o => o.Enabled) is { Count: > 0 } outputs)
     {
@@ -75,13 +109,18 @@
             <div class="dash-grid dash-grid-out">
                 @foreach (var output in outputs)
                 {
+                    var owner = Device.ManagedBy(output);
                     <div class="dash-out @OutputClass(output.State) @Off(output.Enabled) @Linked"
-                         @attributes="@Link("outputs", output.Number, output.Name)">
+                         @attributes="@Link(OutputTarget(output), output.Name)">
                         <div class="dash-row">
                             <span class="dash-led"></span>
                             <span class="dash-name" title="@output.Name">@output.Name</span>
                             <span class="dash-badge">@GetOutputStateText(output.State)</span>
                         </div>
+                        @if (owner is not null)
+                        {
+                            <div class="dash-owner" title="Switched by @owner">@owner</div>
+                        }
                         @if (output.PrimaryOutput < 0)
                         {
                             <div class="dash-amps">
@@ -241,6 +280,35 @@
         </section>
     }
 
+    @* Timers *@
+    @if (Visible(Device.Timers, t => t.Enabled) is { Count: > 0 } timers)
+    {
+        <section>
+            @Head("Timers", timers.Count, Device.Timers.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var timer in timers)
+                {
+                    @Setting("timers", timer.Number, timer.Name, timer.Enabled, Seconds(timer.Time), TimerModeText(timer.Mode))
+                }
+            </div>
+        </section>
+    }
+
+    @* CAN Messages *@
+    @if (Visible(Device.CanMessages, m => m.Enabled) is { Count: > 0 } canMessages)
+    {
+        <section>
+            @Head("CAN messages", canMessages.Count, Device.CanMessages.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var message in canMessages)
+                {
+                    @Setting("can-messages", message.Number, message.Name, message.Enabled, $"0x{message.Id:X3}",
+                        message.Interval > 0 ? $"every {message.Interval} ms while on" : "once when switched on")
+                }
+            </div>
+        </section>
+    }
+
     @* Wiper *@
     @if (Device.Def.HasWipers && (Device.Wipers.Enabled || _showDisabled))
     {
@@ -303,12 +371,14 @@
 
     private string Linked => OnOpen.HasDelegate ? "dash-link" : "";
 
+    private IReadOnlyDictionary<string, object> Link(string section, int number, string name) =>
+        Link(new ConfigTarget(section, number), name);
+
     // Click or Enter on a tile opens its block in the Configuration tab
-    private IReadOnlyDictionary<string, object> Link(string section, int number, string name)
+    private IReadOnlyDictionary<string, object> Link(ConfigTarget target, string name)
     {
         if (!OnOpen.HasDelegate) return NoLink;
 
-        var target = new ConfigTarget(section, number);
         return new Dictionary<string, object>
         {
             ["role"] = "button",
@@ -339,7 +409,10 @@
             .Concat(Device.VirtualInputs.Select(i => i.Enabled))
             .Concat(Device.Conditions.Select(c => c.Enabled))
             .Concat(Device.Counters.Select(c => c.Enabled))
-            .Concat(Device.Flashers.Select(f => f.Enabled));
+            .Concat(Device.Flashers.Select(f => f.Enabled))
+            .Concat(Device.Timers.Select(t => t.Enabled))
+            .Concat(Device.CanMessages.Select(m => m.Enabled));
+        if (Device.Def.HasIgnition) flags = flags.Append(Device.Ignition.Enabled);
         if (Device.Def.HasWipers) flags = flags.Append(Device.Wipers.Enabled);
         if (Device.Def.HasStarterDisable) flags = flags.Append(Device.StarterDisable.Enabled);
         return flags.Count(f => f == enabled);
@@ -364,7 +437,83 @@
             <Sparkline Source="source" Property="@property" Width="158" Height="16"/>
         </div>;
 
+    // A block the PDM does not report live: what it is set to instead of a value
+    private RenderFragment Setting(string section, int number, string name, bool enabled, string value, string note) =>
+        @<div class="dash-sig dash-setting @Off(enabled) @Linked" @attributes="@Link(section, number, name)">
+            <span class="dash-name" title="@name">@name</span>
+            <span class="dash-val">@value</span>
+            <span class="dash-note">@note</span>
+        </div>;
+
     private static string Off(bool enabled) => enabled ? "" : "is-disabled";
+
+    private static string Seconds(int ms) =>
+        (ms / 1000.0).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " s";
+
+    private static string TimerModeText(TimerMode mode) => mode switch
+    {
+        TimerMode.OnDelay => "On delay",
+        TimerMode.OffDelay => "Off delay",
+        TimerMode.PulseRetrig => "Pulse, retriggered",
+        TimerMode.PulseOneShot => "Pulse, one shot",
+        _ => mode.ToString()
+    };
+
+    // An output switched by the ignition or a vehicle function is set up there
+    private ConfigTarget OutputTarget(Output output)
+    {
+        if (Device.Def.HasIgnition && Device.Ignition.RoleOf(output.Number) != IgnitionOutputRole.None)
+            return new ConfigTarget("ignition");
+        if (VehicleFunctionService.OwnerOf(Device, output) is not null)
+            return new ConfigTarget("vehicle-functions");
+        return new ConfigTarget("outputs", output.Number);
+    }
+
+    private static string IgnitionClass(IgnitionState state) => state switch
+    {
+        IgnitionState.Ignition or IgnitionState.Running => "on",
+        IgnitionState.Cranking => "warn",
+        _ => ""
+    };
+
+    private static string IgnitionText(IgnitionState state) => state switch
+    {
+        IgnitionState.Ignition => "IGNITION",
+        IgnitionState.Cranking => "CRANKING",
+        IgnitionState.Running => "RUNNING",
+        _ => "OFF"
+    };
+
+    private static string DashText(DashState state) => state switch
+    {
+        DashState.On => "on",
+        DashState.Grace => "on after ignition off",
+        DashState.Halting => "shutting down",
+        DashState.Restart => "power cycle",
+        _ => "off"
+    };
+
+    private static string SleepText(Ignition ign) => ign.SleepStatus switch
+    {
+        IgnitionSleepStatus.Counting => $"Sleep in {ign.SleepCountdown} s",
+        IgnitionSleepStatus.Following => "Sleeps with the master",
+        IgnitionSleepStatus.WaitingDash => "Sleep waits for the dash",
+        IgnitionSleepStatus.BlockedUsb => "Sleep blocked by USB",
+        IgnitionSleepStatus.Quiet or IgnitionSleepStatus.Sleep => "Going to sleep",
+        IgnitionSleepStatus.Awake => "Awake",
+        _ => "Sleep not managed"
+    };
+
+    private static string WakeText(int source)
+    {
+        var sources = new List<string>();
+        if ((source & 0x01) != 0) sources.Add("CAN");
+        if ((source & 0x02) != 0) sources.Add("digital input");
+        if ((source & 0x04) != 0) sources.Add("USB");
+        if ((source & 0x08) != 0) sources.Add("another wake line");
+        if ((source & 0x10) != 0) sources.Add("an internal interrupt");
+        return sources.Count > 0 ? string.Join(" + ", sources) : "unknown";
+    }
 
     private static string OnOff(bool state) => state ? "ON" : "OFF";
 

@@ -15,7 +15,7 @@
 
     @if (Device.Def.HasIgnition)
     {
-        <MudTabPanel Text="Ignition" Icon="@Icons.Material.Outlined.Key">
+        <MudTabPanel @ref="_ignitionPanel" Text="Ignition" Icon="@Icons.Material.Outlined.Key">
             <IgnitionTab TDevice="TDevice" Device="Device" />
         </MudTabPanel>
     }
@@ -47,6 +47,7 @@
 
     private MudTabs? _tabs;
     private MudTabPanel? _configPanel;
+    private MudTabPanel? _ignitionPanel;
     private MudTabPanel? _flowPanel;
     private int _activePanelIndex;
     private IJSObjectReference? _jump;
@@ -55,6 +56,14 @@
     private async Task OpenConfig(ConfigTarget target)
     {
         if (_tabs is null || _configPanel is null) return;
+
+        // The ignition has a tab of its own
+        if (target.Section == "ignition")
+        {
+            if (_ignitionPanel is not null) _tabs.ActivatePanel(_ignitionPanel);
+            return;
+        }
+
         _tabs.ActivatePanel(_configPanel);
 
         try
