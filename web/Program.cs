@@ -100,7 +100,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    // Without this, browsers guess how long to keep app.css and the scripts, and after an
+    // update can keep using the old ones. Revalidate on every load: unchanged files are a 304.
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "no-cache"
+});
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
