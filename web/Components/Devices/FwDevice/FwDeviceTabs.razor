@@ -1,13 +1,15 @@
 @using web.Components.Devices.FwDevice.Tabs
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 @typeparam TDevice where TDevice : domain.Devices.FwDevice
 
 <MudTabs @ref="_tabs" @bind-ActivePanelIndex="_activePanelIndex"
          Elevation="2" Rounded="true" ApplyEffectsToContainer="true" KeepPanelsAlive="true">
     <MudTabPanel Text="Dashboard" Icon="@Icons.Material.Filled.Dashboard">
-        <DashboardTab TDevice="TDevice" Device="Device" />
+        <DashboardTab TDevice="TDevice" Device="Device" OnOpen="OpenConfig" />
     </MudTabPanel>
 
-    <MudTabPanel Text="Configuration" Icon="@Icons.Material.Filled.Settings">
+    <MudTabPanel @ref="_configPanel" Text="Configuration" Icon="@Icons.Material.Filled.Settings">
         <ConfigurationTab TDevice="TDevice" Device="Device" />
     </MudTabPanel>
     
@@ -37,6 +39,35 @@
     [Parameter, EditorRequired] public TDevice Device { get; set; } = null!;
 
     private MudTabs? _tabs;
+    private MudTabPanel? _configPanel;
     private MudTabPanel? _flowPanel;
     private int _activePanelIndex;
+    private IJSObjectReference? _jump;
+
+    // A dashboard tile was clicked: show that block in the Configuration tab
+    private async Task OpenConfig(ConfigTarget target)
+    {
+        if (_tabs is null || _configPanel is null) return;
+        _tabs.ActivatePanel(_configPanel);
+
+        try
+        {
+            _jump ??= await JS.InvokeAsync<IJSObjectReference>("import", ConfigJumpInterop.ModulePath);
+            await _jump.InvokeVoidAsync("jumpTo", target.Section, target.Number);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_jump is not null) await _jump.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 }

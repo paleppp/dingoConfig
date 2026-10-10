@@ -1,5 +1,6 @@
 @using domain.Enums
 @using domain.Devices.Functions
+@using Microsoft.AspNetCore.Components.Web
 @typeparam TDevice where TDevice : domain.Devices.FwDevice
 
 <SparklineHost>
@@ -40,7 +41,7 @@
                 <span class="dash-value">@Device.Version</span>
                 <span class="dash-note">CAN @GetBitRateDisplay(Device.BitRate)</span>
             </div>
-            <div class="dash-stat dash-flags">
+            <div class="dash-stat dash-flags @Linked" @attributes="@Link("device", 0, "Device settings")">
                 @if (Device.Def.CanSleep)
                 {
                     <span class="dash-flag @(Device.SleepEnabled ? "on" : "")"><span class="dash-led"></span>Sleep</span>
@@ -74,7 +75,8 @@
             <div class="dash-grid dash-grid-out">
                 @foreach (var output in outputs)
                 {
-                    <div class="dash-out @OutputClass(output.State) @Off(output.Enabled)">
+                    <div class="dash-out @OutputClass(output.State) @Off(output.Enabled) @Linked"
+                         @attributes="@Link("outputs", output.Number, output.Name)">
                         <div class="dash-row">
                             <span class="dash-led"></span>
                             <span class="dash-name" title="@output.Name">@output.Name</span>
@@ -123,7 +125,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var input in digitalInputs)
                 {
-                    @Signal(input, nameof(DigitalInput.State), input.Name, input.Enabled, input.State, OnOff(input.State))
+                    @Signal("digital-inputs", input.Number, input, nameof(DigitalInput.State), input.Name, input.Enabled, input.State, OnOff(input.State))
                 }
             </div>
         </section>
@@ -137,7 +139,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var output in digitalOutputs)
                 {
-                    @Signal(output, nameof(DigitalOutput.State), output.Name, output.Enabled, output.State, OnOff(output.State))
+                    @Signal("digital-outputs", output.Number, output, nameof(DigitalOutput.State), output.Name, output.Enabled, output.State, OnOff(output.State))
                 }
             </div>
         </section>
@@ -151,7 +153,8 @@
             <div class="dash-grid dash-grid-out">
                 @foreach (var input in analogInputs)
                 {
-                    <div class="dash-out @(input.Switch.State ? "on" : "") @Off(input.Enabled)">
+                    <div class="dash-out @(input.Switch.State ? "on" : "") @Off(input.Enabled) @Linked"
+                         @attributes="@Link("analog-inputs", input.Number, input.Name)">
                         <div class="dash-row">
                             <span class="dash-led" title="Digital state"></span>
                             <span class="dash-name" title="@input.Name">@input.Name</span>
@@ -176,7 +179,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var input in canInputs)
                 {
-                    @Signal(input, nameof(CanInput.Value), input.Name, input.Enabled, input.Output, input.Value.ToString())
+                    @Signal("can-inputs", input.Number, input, nameof(CanInput.Value), input.Name, input.Enabled, input.Output, input.Value.ToString())
                 }
             </div>
         </section>
@@ -190,7 +193,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var input in virtualInputs)
                 {
-                    @Signal(input, nameof(VirtualInput.Value), input.Name, input.Enabled, input.Value, OnOff(input.Value))
+                    @Signal("virtual-inputs", input.Number, input, nameof(VirtualInput.Value), input.Name, input.Enabled, input.Value, OnOff(input.Value))
                 }
             </div>
         </section>
@@ -204,7 +207,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var condition in conditions)
                 {
-                    @Signal(condition, nameof(Condition.Value), condition.Name, condition.Enabled, condition.Value > 0, condition.Value.ToString())
+                    @Signal("conditions", condition.Number, condition, nameof(Condition.Value), condition.Name, condition.Enabled, condition.Value > 0, condition.Value.ToString())
                 }
             </div>
         </section>
@@ -218,7 +221,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var counter in counters)
                 {
-                    @Signal(counter, nameof(Counter.Value), counter.Name, counter.Enabled, counter.Value > 0, counter.Value.ToString())
+                    @Signal("counters", counter.Number, counter, nameof(Counter.Value), counter.Name, counter.Enabled, counter.Value > 0, counter.Value.ToString())
                 }
             </div>
         </section>
@@ -232,7 +235,7 @@
             <div class="dash-grid dash-grid-sig">
                 @foreach (var flasher in flashers)
                 {
-                    @Signal(flasher, nameof(Flasher.Value), flasher.Name, flasher.Enabled, flasher.Value, OnOff(flasher.Value))
+                    @Signal("flashers", flasher.Number, flasher, nameof(Flasher.Value), flasher.Name, flasher.Enabled, flasher.Value, OnOff(flasher.Value))
                 }
             </div>
         </section>
@@ -245,7 +248,8 @@
         <section>
             @Head("Wiper", 1, 1)
             <div class="dash-grid dash-grid-out">
-                <div class="dash-out @(wiper.State is WiperState.Parked ? "" : "on") @Off(wiper.Enabled)">
+                <div class="dash-out @(wiper.State is WiperState.Parked ? "" : "on") @Off(wiper.Enabled) @Linked"
+                     @attributes="@Link("wiper", 0, wiper.Name)">
                     <div class="dash-row">
                         <span class="dash-led"></span>
                         <span class="dash-name" title="@wiper.Name">@wiper.Name</span>
@@ -269,7 +273,8 @@
         <section>
             @Head("Starter disable", 1, 1)
             <div class="dash-grid dash-grid-out">
-                <div class="dash-out @Off(starter.Enabled)">
+                <div class="dash-out @Off(starter.Enabled) @Linked"
+                     @attributes="@Link("starter-disable", 0, starter.Name)">
                     <div class="dash-row">
                         <span class="dash-name" title="@starter.Name">@starter.Name</span>
                     </div>
@@ -289,7 +294,31 @@
 @code {
     [Parameter, EditorRequired] public TDevice Device { get; set; } = null!;
 
+    /// <summary>Opens a block in the Configuration tab; without it the tiles are not clickable</summary>
+    [Parameter] public EventCallback<ConfigTarget> OnOpen { get; set; }
+
     private bool _showDisabled;
+
+    private static readonly Dictionary<string, object> NoLink = new();
+
+    private string Linked => OnOpen.HasDelegate ? "dash-link" : "";
+
+    // Click or Enter on a tile opens its block in the Configuration tab
+    private IReadOnlyDictionary<string, object> Link(string section, int number, string name)
+    {
+        if (!OnOpen.HasDelegate) return NoLink;
+
+        var target = new ConfigTarget(section, number);
+        return new Dictionary<string, object>
+        {
+            ["role"] = "button",
+            ["tabindex"] = "0",
+            ["aria-label"] = $"{name}: open in Configuration",
+            ["onclick"] = EventCallback.Factory.Create<MouseEventArgs>(this, () => OnOpen.InvokeAsync(target)),
+            ["onkeydown"] = EventCallback.Factory.Create<KeyboardEventArgs>(this,
+                e => e.Key == "Enter" ? OnOpen.InvokeAsync(target) : Task.CompletedTask)
+        };
+    }
 
     private List<T> Visible<T>(IEnumerable<T> items, Func<T, bool> enabled) =>
         _showDisabled ? items.ToList() : items.Where(enabled).ToList();
@@ -326,8 +355,9 @@
         </div>;
 
     // One live value: a light, its name and value, and a short trend under them
-    private RenderFragment Signal(object source, string property, string name, bool enabled, bool active, string value) =>
-        @<div class="dash-sig @(active ? "on" : "") @Off(enabled)">
+    private RenderFragment Signal(string section, int number, object source, string property, string name, bool enabled,
+        bool active, string value) =>
+        @<div class="dash-sig @(active ? "on" : "") @Off(enabled) @Linked" @attributes="@Link(section, number, name)">
             <span class="dash-led"></span>
             <span class="dash-name" title="@name">@name</span>
             <span class="dash-val">@value</span>

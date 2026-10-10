@@ -442,8 +442,87 @@ h1:focus {
     opacity: 0.4;
 }
 
+/* A tile that opens its block in the Configuration tab */
+.dash-link {
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s, transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.dash-link:hover {
+    border-color: color-mix(in srgb, var(--dash-on) 70%, transparent);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+}
+
+.dash-link:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: none;
+}
+
+.dash-link:focus-visible {
+    outline: 2px solid var(--dash-on);
+    outline-offset: 2px;
+}
+
+.dash .is-disabled.dash-link:hover {
+    opacity: 0.7;
+}
+
+/* Configuration tab: the block a dashboard tile pointed at lights up, then fades */
+@keyframes cfg-jump-row {
+    0%, 35% {
+        box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent);
+    }
+    100% {
+        box-shadow: inset 0 0 0 999px transparent;
+    }
+}
+
+@keyframes cfg-jump-mark {
+    0%, 35% {
+        box-shadow: inset 3px 0 0 var(--mud-palette-primary),
+                    inset 0 0 0 999px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent);
+    }
+    100% {
+        box-shadow: inset 3px 0 0 transparent, inset 0 0 0 999px transparent;
+    }
+}
+
+@keyframes cfg-jump-ring {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--mud-palette-primary) 70%, transparent);
+    }
+    35% {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mud-palette-primary) 55%, transparent);
+    }
+    100% {
+        box-shadow: 0 0 0 3px transparent;
+    }
+}
+
+tr.cfg-jump > td {
+    animation: cfg-jump-row 1.8s ease-out;
+}
+
+tr.cfg-jump > td:first-child {
+    animation-name: cfg-jump-mark;
+}
+
+.mud-expand-panel.cfg-jump {
+    animation: cfg-jump-ring 1.8s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .dash-out, .dash-sig, .dash-meter i {
+    .dash-out, .dash-sig, .dash-meter i, .dash-link {
         transition: none;
+    }
+
+    .dash-link:hover, .dash-link:active {
+        transform: none;
+    }
+
+    tr.cfg-jump > td, tr.cfg-jump > td:first-child, .mud-expand-panel.cfg-jump {
+        animation: none;
+        box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent);
     }
 }

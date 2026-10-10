@@ -11,7 +11,7 @@
     style="overflow-y: auto; height: calc(100vh - 250px); padding: 24px; scrollbar-width: auto; scrollbar-color: #888 transparent;">
     <MudExpansionPanels MultiExpansion="true">
 
-        <MudExpansionPanel Text="Device">
+        <MudExpansionPanel Text="Device" Class="cfg-device">
             <MudGrid Spacing="4">
                 <MudItem>
                     <MudCard Elevation="4" Style="height: 100%">
@@ -121,7 +121,7 @@
         @* Outputs *@
         @if (Device.Outputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Outputs ({Device.Outputs.Count})")"
+            <MudExpansionPanel Text="@($"Outputs ({Device.Outputs.Count})")" Class="cfg-outputs"
                                ExpandedChanged="@((bool expanded) => _outputsExpanded = expanded)">
                 @if (_outputsExpanded)
                 {
@@ -130,7 +130,7 @@
             </MudExpansionPanel>
 
             @* Outputs PWM *@
-            <MudExpansionPanel Text="@($"Outputs PWM ({Device.Outputs.Count})")"
+            <MudExpansionPanel Text="@($"Outputs PWM ({Device.Outputs.Count})")" Class="cfg-outputs-pwm"
                                ExpandedChanged="@((bool expanded) => _outputsPwmExpanded = expanded)">
                 @if (_outputsPwmExpanded)
                 {
@@ -142,7 +142,7 @@
         @* Analog Inputs *@
         @if (Device.AnalogInputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Analog Inputs ({Device.AnalogInputs.Count})")"
+            <MudExpansionPanel Text="@($"Analog Inputs ({Device.AnalogInputs.Count})")" Class="cfg-analog-inputs"
                                ExpandedChanged="@((bool expanded) => _analogInputsExpanded = expanded)">
                 @if (_analogInputsExpanded)
                 {
@@ -151,7 +151,7 @@
             </MudExpansionPanel>
 
             @* Rotary Switch *@
-            <MudExpansionPanel Text="@($"Rotary Switch ({Device.AnalogInputs.Count})")"
+            <MudExpansionPanel Text="@($"Rotary Switch ({Device.AnalogInputs.Count})")" Class="cfg-rotary-switch"
                                ExpandedChanged="@((bool expanded) => _rotarySwitchExpanded = expanded)">
                 @if (_rotarySwitchExpanded)
                 {
@@ -163,7 +163,7 @@
         @* Digital Inputs *@
         @if (Device.DigitalInputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Digital Inputs ({Device.DigitalInputs.Count})")"
+            <MudExpansionPanel Text="@($"Digital Inputs ({Device.DigitalInputs.Count})")" Class="cfg-digital-inputs"
                                ExpandedChanged="@((bool expanded) => _digitalInputsExpanded = expanded)">
                 @if (_digitalInputsExpanded)
                 {
@@ -175,7 +175,7 @@
         @* Digital Outputs *@
         @if (Device.DigitalOutputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Digital Outputs ({Device.DigitalOutputs.Count})")"
+            <MudExpansionPanel Text="@($"Digital Outputs ({Device.DigitalOutputs.Count})")" Class="cfg-digital-outputs"
                                ExpandedChanged="@((bool expanded) => _digitalOutputsExpanded = expanded)">
                 @if (_digitalOutputsExpanded)
                 {
@@ -187,7 +187,7 @@
         @* CAN Inputs *@
         @if (Device.CanInputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"CAN Inputs ({Device.CanInputs.Count})")"
+            <MudExpansionPanel Text="@($"CAN Inputs ({Device.CanInputs.Count})")" Class="cfg-can-inputs"
                                ExpandedChanged="@((bool expanded) => _canInputsExpanded = expanded)">
                 @if (_canInputsExpanded)
                 {
@@ -199,7 +199,7 @@
         @* CAN Outputs *@
         @if (Device.CanOutputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"CAN Outputs ({Device.CanOutputs.Count})")"
+            <MudExpansionPanel Text="@($"CAN Outputs ({Device.CanOutputs.Count})")" Class="cfg-can-outputs"
                                ExpandedChanged="@((bool expanded) => _canOutputsExpanded = expanded)">
                 @if (_canOutputsExpanded)
                 {
@@ -211,7 +211,7 @@
         @* Virtual Inputs *@
         @if (Device.VirtualInputs.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Virtual Inputs ({Device.VirtualInputs.Count})")"
+            <MudExpansionPanel Text="@($"Virtual Inputs ({Device.VirtualInputs.Count})")" Class="cfg-virtual-inputs"
                                ExpandedChanged="@((bool expanded) => _virtualInputsExpanded = expanded)">
                 @if (_virtualInputsExpanded)
                 {
@@ -223,7 +223,7 @@
         @* Conditions *@
         @if (Device.Conditions.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Conditions ({Device.Conditions.Count})")"
+            <MudExpansionPanel Text="@($"Conditions ({Device.Conditions.Count})")" Class="cfg-conditions"
                                ExpandedChanged="@((bool expanded) => _conditionsExpanded = expanded)">
                 @if (_conditionsExpanded)
                 {
@@ -235,7 +235,7 @@
         @* Counters *@
         @if (Device.Counters.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Counters ({Device.Counters.Count})")"
+            <MudExpansionPanel Text="@($"Counters ({Device.Counters.Count})")" Class="cfg-counters"
                                ExpandedChanged="@((bool expanded) => _countersExpanded = expanded)">
                 @if (_countersExpanded)
                 {
@@ -247,7 +247,7 @@
         @* Flashers *@
         @if (Device.Flashers.Count > 0)
         {
-            <MudExpansionPanel Text="@($"Flashers ({Device.Flashers.Count})")"
+            <MudExpansionPanel Text="@($"Flashers ({Device.Flashers.Count})")" Class="cfg-flashers"
                                ExpandedChanged="@((bool expanded) => _flashersExpanded = expanded)">
                 @if (_flashersExpanded)
                 {
@@ -259,7 +259,7 @@
         @* Wiper *@
         @if (Device.Def.HasWipers)
         {
-            <MudExpansionPanel Text="Wiper"
+            <MudExpansionPanel Text="Wiper" Class="cfg-wiper"
                                ExpandedChanged="@((bool expanded) => _wiperExpanded = expanded)">
                 @if (_wiperExpanded)
                 {
@@ -271,7 +271,7 @@
         @* Starter Disable *@
         @if (Device.Def.HasStarterDisable)
         {
-            <MudExpansionPanel Text="Starter Disable"
+            <MudExpansionPanel Text="Starter Disable" Class="cfg-starter-disable"
                                ExpandedChanged="@((bool expanded) => _starterDisableExpanded = expanded)">
                 @if (_starterDisableExpanded)
                 {
