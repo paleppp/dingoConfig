@@ -82,8 +82,20 @@
                     }
                 </MudSelect>
 
-                @* Show port selector for USB and SLCAN only (not PCAN or Sim) *@
-                @if (!string.IsNullOrEmpty(_selectedAdapterType) && _selectedAdapterType != "Sim" && _selectedAdapterType != "PCAN")
+                @if (_selectedAdapterType == "WiFi")
+                {
+                    <MudTextField @bind-Value="_wifiAddress"
+                                  Label="Bridge address"
+                                  Placeholder="192.168.4.1"
+                                  HelperText="Port 3333 unless given, e.g. 192.168.1.50:3333"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Class="mb-2"
+                                  T="string"/>
+                }
+
+                @* Show port selector for USB and SLCAN only (not WiFi, PCAN or Sim) *@
+                @if (!string.IsNullOrEmpty(_selectedAdapterType) && _selectedAdapterType != "Sim" && _selectedAdapterType != "PCAN" && _selectedAdapterType != "WiFi")
                 {
                     <MudSelect @bind-Value="_selectedPort"
                                Label="Port"
@@ -119,14 +131,14 @@
                     <div class="mb-3"></div>
                 }
 
-                @if (_available.Adapters.Length == 0 || _available.Ports.Length == 0)
+                @if (_available.Adapters.Length == 0 || (_available.Ports.Length == 0 && NeedsPort))
                 {
                     <MudAlert Severity="Severity.Warning" Class="mb-3" Dense="true">
                         @if (_available.Adapters.Length == 0)
                         {
                             <MudText Typo="Typo.caption">No adapters available</MudText>
                         }
-                        @if (_available.Ports.Length == 0)
+                        @if (_available.Ports.Length == 0 && NeedsPort)
                         {
                             <MudText Typo="Typo.caption">No ports detected</MudText>
                         }
@@ -176,6 +188,7 @@
 
     private string _selectedAdapterType = string.Empty;
     private string _selectedPort = string.Empty;
+    private string _wifiAddress = "192.168.4.1";
     private CanBitRate _selectedBitrate = CanBitRate.BitRate500K;
 
     protected override void OnInitialized()
@@ -188,6 +201,9 @@
             _selectedPort = UserPrefs.Preferences.SelectedPort;
         
         _selectedBitrate = UserPrefs.Preferences.SelectedBitrate;
+
+        if (!string.IsNullOrWhiteSpace(UserPrefs.Preferences.WifiAddress))
+            _wifiAddress = UserPrefs.Preferences.WifiAddress;
 
         LoadData();
         Refresh();
@@ -280,6 +296,7 @@
             {
                 "Sim" => "Simulated",
                 "PCAN" => "PCAN_USBBUS1", // Default PCAN port
+                "WiFi" => _wifiAddress.Trim(),
                 _ => _selectedPort
             };
 
@@ -296,6 +313,8 @@
                 UserPrefs.Preferences.SelectedAdapter = _selectedAdapterType;
                 UserPrefs.Preferences.SelectedPort = _selectedPort;
                 UserPrefs.Preferences.SelectedBitrate = _selectedBitrate;
+                if (_selectedAdapterType == "WiFi")
+                    UserPrefs.Preferences.WifiAddress = _wifiAddress.Trim();
                 UserPrefs.Save();
 
                 _isOpen = false; // Close popover on success
@@ -343,6 +362,10 @@
         // Sim adapter doesn't need port or bitrate
         if (_selectedAdapterType == "Sim")
             return true;
+
+        // WiFi needs the bridge's address instead of a port
+        if (_selectedAdapterType == "WiFi")
+            return infrastructure.Adapters.WifiAdapter.TryParseAddress(_wifiAddress, out _, out _);
 
         // USB adapter needs port but not bitrate
         if (_selectedAdapterType == "USB")
@@ -409,6 +432,9 @@
     {
         _refreshTimer?.Dispose();
     }
+
+    // Serial adapters pick a port from the list; WiFi, PCAN and Sim do not
+    private bool NeedsPort => _selectedAdapterType is not ("WiFi" or "PCAN" or "Sim");
 
     private void OnAdapterTypeChanged(string obj)
     {
