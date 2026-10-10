@@ -81,8 +81,6 @@ public class FunctionInput
 [JsonDerivedType(typeof(TurnSignals), "turnSignals")]
 [JsonDerivedType(typeof(Headlights), "headlights")]
 [JsonDerivedType(typeof(Taillights), "taillights")]
-[JsonDerivedType(typeof(BrakeLights), "brakeLights")]
-[JsonDerivedType(typeof(ReverseLight), "reverseLight")]
 [JsonDerivedType(typeof(InteriorLight), "interiorLight")]
 [JsonDerivedType(typeof(Horn), "horn")]
 [JsonDerivedType(typeof(FuelPump), "fuelPump")]

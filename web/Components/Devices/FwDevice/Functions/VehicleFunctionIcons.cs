@@ -10,8 +10,6 @@ public static class VehicleFunctionIcons
         Headlights => Icons.Material.Outlined.Highlight,
         Taillights => Icons.Material.Outlined.WbTwilight,
         TurnSignals => Icons.Material.Outlined.SyncAlt,
-        BrakeLights => Icons.Material.Outlined.StopCircle,
-        ReverseLight => Icons.Material.Outlined.Undo,
         InteriorLight => Icons.Material.Outlined.Lightbulb,
         Horn => Icons.Material.Outlined.Campaign,
         Wipers => Icons.Material.Outlined.Water,

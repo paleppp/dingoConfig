@@ -5,13 +5,13 @@
 @typeparam TDevice where TDevice : domain.Interfaces.IDeviceConfigurable
 @inherits FunctionComponentBase<TDevice>
 
-<MudDataGrid Items="@Conditions" RowStyleFunc="@IgnitionRowStyle" RowClassFunc="@ManagedRowClass" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false"
+<MudDataGrid Items="@Conditions" RowStyleFunc="@UsesRowStyle" RowClassFunc="@ManagedRowClass" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false"
              SortMode="SortMode.None" ColumnResizeMode="ResizeMode.Container" Virtualize="true" 
              FixedHeader="true" HorizontalScrollbar="true" Style="max-height: 400px;">
     <Columns>
         <TemplateColumn Title="#" StickyLeft="true" Editable="false" CellStyle="max-width: 100px">
             <CellTemplate>
-                @context.Item.Number<ManagedBadge By="@ManagedBy?.Invoke(context.Item)"/><IgnitionUseBadge Uses="@IgnitionUses?.Invoke(context.Item)"/>
+                @context.Item.Number<ManagedBadge By="@ManagedBy?.Invoke(context.Item)"/><UsesBadge Uses="@Uses?.Invoke(context.Item)"/>
             </CellTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.Enabled" CellStyle="max-width: 100px">
@@ -71,16 +71,16 @@
 </MudDataGrid>
 
 @code {
-    // What the Ignition tab and vehicle functions read from each item, see FwDevice.UsesOf
-    [Parameter] public Func<domain.Interfaces.IDeviceFunction, IReadOnlyList<string>>? IgnitionUses { get; set; }
+    // What else reads each item, see FwDevice.UsesOf
+    [Parameter] public Func<domain.Interfaces.IDeviceFunction, IReadOnlyList<string>>? Uses { get; set; }
 
     // A vehicle function building this block, see FwDevice.ManagedBy
     [Parameter] public Func<domain.Interfaces.IDeviceFunction, string?>? ManagedBy { get; set; }
 
     private string ManagedRowClass(Condition item, int _) => ManagedBy?.Invoke(item) != null ? "managed-row" : "";
 
-    private string IgnitionRowStyle(Condition item, int _) =>
-        IgnitionUses?.Invoke(item) is { Count: > 0 } ? "background-color: rgba(var(--mud-palette-primary-rgb), 0.06);" : "";
+    private string UsesRowStyle(Condition item, int _) =>
+        Uses?.Invoke(item) is { Count: > 0 } ? "background-color: rgba(var(--mud-palette-primary-rgb), 0.06);" : "";
 
     [Parameter, EditorRequired]
     public List<Condition> Conditions { get; set; } = null!;

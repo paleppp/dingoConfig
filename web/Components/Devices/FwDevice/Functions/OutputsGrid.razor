@@ -6,10 +6,11 @@
 @inherits FunctionComponentBase<TDevice>
 
 <style>
-    /* Outputs the Ignition tab switches: dimmed, back to full strength on hover so the
-       protection settings, which still apply, stay easy to edit */
-    .ign-claimed td { opacity: 0.5; transition: opacity 120ms ease; }
-    .ign-claimed:hover td { opacity: 1; }
+    /* Outputs switched from elsewhere (an ignition role, a vehicle function): dimmed,
+       back to full strength on hover so the protection settings, which still apply,
+       stay easy to edit */
+    .claimed-row td { opacity: 0.5; transition: opacity 120ms ease; }
+    .claimed-row:hover td { opacity: 1; }
 </style>
 
 <MudDataGrid Items="@Outputs" RowClassFunc="@RowClass" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false" 
@@ -137,7 +138,7 @@
 
     private bool IsClaimed(Output output) => ManagedBy?.Invoke(output) != null;
 
-    private string RowClass(Output output, int _) => IsClaimed(output) ? "ign-claimed" : "";
+    private string RowClass(Output output, int _) => IsClaimed(output) ? "claimed-row" : "";
 
     private int _refreshCounter;
 

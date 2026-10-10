@@ -15,26 +15,6 @@ public abstract class SwitchedFunction : VehicleFunction
     protected internal override void Build(FunctionBuilder b) => b.Drive(Loads.Key, b.In(Switch.Key));
 }
 
-/// <summary>Older projects only: folded into <see cref="Taillights"/> when they load.</summary>
-public sealed class BrakeLights : SwitchedFunction
-{
-    public override string Title => "Brake lights";
-    public override string Summary => "Brake lamps and third brake light from the pedal switch.";
-    protected override InputSlot Switch { get; } = new("brake", "Brake pedal switch", true);
-    protected override OutputSlot Loads { get; } =
-        new("lamps", "Brake lamps", "Brake light", new OutputDefaults(8, 20, 100));
-}
-
-/// <summary>Older projects only: folded into <see cref="Taillights"/> when they load.</summary>
-public sealed class ReverseLight : SwitchedFunction
-{
-    public override string Title => "Reverse light";
-    public override string Summary => "Reverse lamps from the gearbox switch.";
-    protected override InputSlot Switch { get; } = new("reverse", "Reverse switch", true);
-    protected override OutputSlot Loads { get; } =
-        new("lamps", "Reverse lamps", "Reverse light", new OutputDefaults(5, 15, 100));
-}
-
 public sealed class Horn : SwitchedFunction
 {
     public override string Title => "Horn";

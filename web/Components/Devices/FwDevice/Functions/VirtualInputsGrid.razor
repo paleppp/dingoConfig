@@ -5,13 +5,13 @@
 @typeparam TDevice where TDevice : domain.Interfaces.IDeviceConfigurable
 @inherits FunctionComponentBase<TDevice>
 
-<MudDataGrid Items="@VirtualInputs" RowClassFunc="@ManagedRowClass" RowStyleFunc="@IgnitionRowStyle" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false"
+<MudDataGrid Items="@VirtualInputs" RowClassFunc="@ManagedRowClass" RowStyleFunc="@UsesRowStyle" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false"
              SortMode="SortMode.None" ColumnResizeMode="ResizeMode.Container" Virtualize="true" 
              FixedHeader="true" HorizontalScrollbar="true" Style="max-height: 400px;">
     <Columns>
         <TemplateColumn Title="#" StickyLeft="true" Editable="false" CellStyle="max-width: 100px">
             <CellTemplate>
-                @context.Item.Number<IgnitionUseBadge Uses="@IgnitionUses?.Invoke(context.Item)"/><ManagedBadge By="@ManagedBy?.Invoke(context.Item)"/>
+                @context.Item.Number<UsesBadge Uses="@Uses?.Invoke(context.Item)"/><ManagedBadge By="@ManagedBy?.Invoke(context.Item)"/>
             </CellTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.Enabled">
@@ -133,11 +133,11 @@
 
     private string ManagedRowClass(VirtualInput item, int _) => ManagedBy?.Invoke(item) != null ? "managed-row" : "";
 
-    // What the Ignition tab and vehicle functions read from each item, see FwDevice.UsesOf
-    [Parameter] public Func<domain.Interfaces.IDeviceFunction, IReadOnlyList<string>>? IgnitionUses { get; set; }
+    // What else reads each item, see FwDevice.UsesOf
+    [Parameter] public Func<domain.Interfaces.IDeviceFunction, IReadOnlyList<string>>? Uses { get; set; }
 
-    private string IgnitionRowStyle(VirtualInput item, int _) =>
-        IgnitionUses?.Invoke(item) is { Count: > 0 } ? "background-color: rgba(var(--mud-palette-primary-rgb), 0.06);" : "";
+    private string UsesRowStyle(VirtualInput item, int _) =>
+        Uses?.Invoke(item) is { Count: > 0 } ? "background-color: rgba(var(--mud-palette-primary-rgb), 0.06);" : "";
 
     [Parameter, EditorRequired]
     public List<VirtualInput> VirtualInputs { get; set; } = null!;

@@ -3,13 +3,13 @@
 @using domain.Enums
 @inject NotificationService Notification
 
-<MudDataGrid Items="@Inputs" RowStyleFunc="@IgnitionRowStyle" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false"
+<MudDataGrid Items="@Inputs" RowStyleFunc="@UsesRowStyle" Dense="true" Hover="true" Striped="false" EditMode="DataGridEditMode.Cell" ReadOnly="false"
              SortMode="SortMode.None" ColumnResizeMode="ResizeMode.Container" Virtualize="true" 
              FixedHeader="true" HorizontalScrollbar="true" Style="max-height: 400px;">
     <Columns>
         <TemplateColumn Title="#" StickyLeft="true" Editable="false" CellStyle="max-width: 100px">
             <CellTemplate>
-                @context.Item.Number<IgnitionUseBadge Uses="@IgnitionUses?.Invoke(context.Item)"/>
+                @context.Item.Number<UsesBadge Uses="@Uses?.Invoke(context.Item)"/>
             </CellTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.Enabled" CellStyle="max-width: 100px">
@@ -71,11 +71,11 @@
 </MudDataGrid>
 
 @code {
-    // What the Ignition tab and vehicle functions read from each item, see FwDevice.UsesOf
-    [Parameter] public Func<domain.Interfaces.IDeviceFunction, IReadOnlyList<string>>? IgnitionUses { get; set; }
+    // What else reads each item, see FwDevice.UsesOf
+    [Parameter] public Func<domain.Interfaces.IDeviceFunction, IReadOnlyList<string>>? Uses { get; set; }
 
-    private string IgnitionRowStyle(DigitalInput item, int _) =>
-        IgnitionUses?.Invoke(item) is { Count: > 0 } ? "background-color: rgba(var(--mud-palette-primary-rgb), 0.06);" : "";
+    private string UsesRowStyle(DigitalInput item, int _) =>
+        Uses?.Invoke(item) is { Count: > 0 } ? "background-color: rgba(var(--mud-palette-primary-rgb), 0.06);" : "";
 
     [Parameter, EditorRequired]
     public List<DigitalInput> Inputs { get; set; } = null!;

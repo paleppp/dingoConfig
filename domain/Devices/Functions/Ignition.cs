@@ -7,8 +7,8 @@ using domain.Models;
 namespace domain.Devices.Functions;
 
 /// <summary>
-/// Ignition, starter and the whole power down: outputs are given a role instead
-/// of an input, and the firmware runs the dash shutdown and sleep on its own.
+/// Ignition and starter. Outputs are given a role instead of an input,
+/// and the firmware runs the dash shutdown and sleep on its own.
 /// With several devices on one bus, one master owns the button and the others
 /// follow its state broadcast.
 /// </summary>
@@ -152,31 +152,32 @@ public class Ignition : IDeviceFunction
         Add("stopInput", () => StopInput, v => StopInput = (int)v, typeof(int), 0);
         Add("maxCrankTime", () => MaxCrankTime, v => MaxCrankTime = (int)v, typeof(int), 10000);
 
-        Add("role", () => Role, v => Role = (IgnitionRole)v, typeof(IgnitionRole), IgnitionRole.Standalone);
-        Add("syncId", () => SyncId, v => SyncId = (int)v, typeof(int), 0x6F1);
+        // The rest have fixed subindexes, numbered as in the firmware
+        Add("role", () => Role, v => Role = (IgnitionRole)v, typeof(IgnitionRole), IgnitionRole.Standalone, 7);
+        Add("syncId", () => SyncId, v => SyncId = (int)v, typeof(int), 0x6F1, 8);
 
-        Add("buttonSource", () => ButtonSource, v => ButtonSource = (IgnitionSource)v, typeof(IgnitionSource), IgnitionSource.Variable);
-        Add("buttonIde", () => ButtonIde, v => ButtonIde = (bool)v, typeof(bool), false);
-        Add("buttonId", () => ButtonId, v => ButtonId = (int)v, typeof(int), 0x6F0);
-        Add("buttonByte", () => ButtonByte, v => ButtonByte = (int)v, typeof(int), 0);
-        Add("buttonMask", () => ButtonMask, v => ButtonMask = (int)v, typeof(int), 0x01);
-        Add("buttonTimeout", () => ButtonTimeout, v => ButtonTimeout = (int)v, typeof(int), 1000);
+        Add("buttonSource", () => ButtonSource, v => ButtonSource = (IgnitionSource)v, typeof(IgnitionSource), IgnitionSource.Variable, 9);
+        Add("buttonIde", () => ButtonIde, v => ButtonIde = (bool)v, typeof(bool), false, 10);
+        Add("buttonId", () => ButtonId, v => ButtonId = (int)v, typeof(int), 0x6F0, 11);
+        Add("buttonByte", () => ButtonByte, v => ButtonByte = (int)v, typeof(int), 0, 12);
+        Add("buttonMask", () => ButtonMask, v => ButtonMask = (int)v, typeof(int), 0x01, 13);
+        Add("buttonTimeout", () => ButtonTimeout, v => ButtonTimeout = (int)v, typeof(int), 1000, 14);
 
-        Add("shutdownEnabled", () => ShutdownEnabled, v => ShutdownEnabled = (bool)v, typeof(bool), false);
-        Add("shutdownIde", () => ShutdownIde, v => ShutdownIde = (bool)v, typeof(bool), false);
-        Add("shutdownId", () => ShutdownId, v => ShutdownId = (int)v, typeof(int), 0x5AA);
-        Add("shutdownDlc", () => ShutdownDlc, v => ShutdownDlc = (int)v, typeof(int), 1);
+        Add("shutdownEnabled", () => ShutdownEnabled, v => ShutdownEnabled = (bool)v, typeof(bool), false, 15);
+        Add("shutdownIde", () => ShutdownIde, v => ShutdownIde = (bool)v, typeof(bool), false, 16);
+        Add("shutdownId", () => ShutdownId, v => ShutdownId = (int)v, typeof(int), 0x5AA, 17);
+        Add("shutdownDlc", () => ShutdownDlc, v => ShutdownDlc = (int)v, typeof(int), 1, 18);
         for (var i = 0; i < ShutdownDataLength; i++)
         {
             var idx = i;
-            Add($"shutdownData[{i}]", () => ShutdownData[idx], v => ShutdownData[idx] = (int)v, typeof(int), i == 0 ? 1 : 0);
+            Add($"shutdownData[{i}]", () => ShutdownData[idx], v => ShutdownData[idx] = (int)v, typeof(int), i == 0 ? 1 : 0, 19 + i);
         }
-        Add("shutdownInterval", () => ShutdownInterval, v => ShutdownInterval = (int)v, typeof(int), 500);
-        Add("graceTime", () => GraceTime, v => GraceTime = (int)v, typeof(int), 3000);
-        Add("dashOffDelay", () => DashOffDelay, v => DashOffDelay = (int)v, typeof(int), 5000);
-        Add("doorInput", () => DoorInput, v => DoorInput = (int)v, typeof(int), 0);
-        Add("doorOnTime", () => DoorOnTime, v => DoorOnTime = (int)v, typeof(int), 60000);
-        Add("sleepDelay", () => SleepDelay, v => SleepDelay = (int)v, typeof(int), 0);
+        Add("shutdownInterval", () => ShutdownInterval, v => ShutdownInterval = (int)v, typeof(int), 500, 27);
+        Add("graceTime", () => GraceTime, v => GraceTime = (int)v, typeof(int), 3000, 28);
+        Add("dashOffDelay", () => DashOffDelay, v => DashOffDelay = (int)v, typeof(int), 5000, 29);
+        Add("doorInput", () => DoorInput, v => DoorInput = (int)v, typeof(int), 0, 30);
+        Add("doorOnTime", () => DoorOnTime, v => DoorOnTime = (int)v, typeof(int), 60000, 31);
+        Add("sleepDelay", () => SleepDelay, v => SleepDelay = (int)v, typeof(int), 0, 32);
 
         for (var i = 0; i < OutputRoles.Count; i++)
         {

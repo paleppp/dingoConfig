@@ -354,7 +354,7 @@
                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="vf-chip"
                          Color="@(output.State == OutState.On ? Color.Success : Color.Default)"
                          OnClose="@((MudChip<string> _) => RemoveOutput(slot.Key, target, number))">
-                    <span title="@tip" class="@(reachable ? "" : "vf-muted")">@ChipText(pdm, number)</span>
+                    <span title="@tip" class="@(reachable ? "" : "muted-text")">@ChipText(pdm, number)</span>
                 </MudChip>
             }
         }

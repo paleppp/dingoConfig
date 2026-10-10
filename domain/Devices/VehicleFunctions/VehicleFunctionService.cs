@@ -225,47 +225,18 @@ public static class VehicleFunctionService
         fn.InputSlots.Where(s => s.Shared == key);
 
     /// <summary>
-    /// Brings a loaded project in step with the current recipes: older functions
-    /// are folded into their successors, settings shared with the ignition are
-    /// evened out (what the function has wins, one only the ignition has moves into
-    /// the function), and everything is rebuilt so signals between functions are
-    /// known again.
+    /// Brings a loaded project in step with the current recipes: settings shared
+    /// with the ignition are evened out (what the function has wins, one only the
+    /// ignition has moves into the function), and everything is rebuilt so signals
+    /// between functions are known again.
     /// </summary>
     public static void AfterLoad(FwDevice device)
     {
-        FoldIntoTaillights(device);
-
         foreach (var key in SharedSignals.Keys)
             if (SharedOwner(device, key) is { } owner)
                 AdoptShared(device, owner);
 
         RebuildAll(device);
-    }
-
-    // Brake lights and the reverse light were functions of their own before Taillights
-    private static void FoldIntoTaillights(FwDevice device)
-    {
-        var old = device.VehicleFunctions.Where(f => f is BrakeLights or ReverseLight).ToList();
-        if (old.Count == 0)
-            return;
-
-        var tail = device.VehicleFunctions.OfType<Taillights>().FirstOrDefault();
-        if (tail == null)
-        {
-            tail = new Taillights();
-            device.VehicleFunctions.Insert(device.VehicleFunctions.IndexOf(old[0]), tail);
-        }
-
-        foreach (var fn in old)
-        {
-            // Same input key in both; the lamps move to the matching row
-            var key = fn is BrakeLights ? "brake" : "reverse";
-            if (tail.Input(key).Var == 0)
-                tail.Input(key).Var = fn.Input(key).Var;
-            foreach (var number in fn.OutputsIn("lamps").Where(n => !tail.OutputsIn(key).Contains(n)))
-                tail.OutputsIn(key).Add(number);
-            device.VehicleFunctions.Remove(fn);
-        }
     }
 
     // A function taking over a shared setting starts from what the ignition already has

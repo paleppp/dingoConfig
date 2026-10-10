@@ -79,10 +79,10 @@
                                  Color="@(Ign.MasterLink == 1 ? Color.Success : Color.Error)"
                                  Icon="@Icons.Material.Outlined.Hub">@(Ign.MasterLink == 1 ? "Master online" : "Master lost")</MudChip>
                     }
-                    <MudText Typo="Typo.body2" Class="vf-muted">@SleepText()</MudText>
+                    <MudText Typo="Typo.body2" Class="muted-text">@SleepText()</MudText>
                     @if ((Ign.WakeSource & 0x80) != 0)
                     {
-                        <MudText Typo="Typo.body2" Class="vf-muted">· woken by @WakeText()</MudText>
+                        <MudText Typo="Typo.body2" Class="muted-text">· woken by @WakeText()</MudText>
                     }
                 }
             </div>
@@ -109,7 +109,7 @@
 
                     @if (Ign.Role == IgnitionRole.Follower)
                     {
-                        <MudText Typo="Typo.body2" Class="vf-muted mb-2">
+                        <MudText Typo="Typo.body2" Class="muted-text mb-2">
                             This device follows the master's ignition on ID @FormatId(Ign.SyncId). Its outputs switch with
                             the master and it sleeps when the master does.
                         </MudText>
@@ -250,7 +250,7 @@
 
                     @if (Assigned.Count == 0)
                     {
-                        <MudText Typo="Typo.body2" Class="vf-muted">
+                        <MudText Typo="Typo.body2" Class="muted-text">
                             No outputs yet. Add the ones the ignition switches, such as the ECU, fuel pump or dash.
                         </MudText>
                     }
@@ -258,7 +258,7 @@
                     {
                         var index = output.Number - 1;
                         <div class="ign-out">
-                            <MudText Typo="Typo.body2" Class="vf-muted">@output.Number</MudText>
+                            <MudText Typo="Typo.body2" Class="muted-text">@output.Number</MudText>
                             <span class="ign-out-name" title="@output.Name">@output.Name</span>
                             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
                                      Color="@(output.State == OutState.On ? Color.Success : Color.Default)">
@@ -283,7 +283,7 @@
 
                     @if (Assigned.Count > 0)
                     {
-                        <MudText Typo="Typo.caption" Class="vf-muted mt-3 d-block">
+                        <MudText Typo="Typo.caption" Class="muted-text mt-3 d-block">
                             Ignition: on with the ignition. Accessory: the same, but off while cranking.
                             Dash: stays on through the dash shutdown. Starter: only while cranking.
                         </MudText>

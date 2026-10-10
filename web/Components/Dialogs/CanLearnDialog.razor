@@ -57,7 +57,7 @@
                         <MudProgressCircular Indeterminate="true" Size="Size.Medium" Color="Color.Primary"/>
                         <div>
                             <MudText Typo="Typo.subtitle1">Don't touch any switch</MudText>
-                            <MudText Typo="Typo.body2" Class="vf-muted">
+                            <MudText Typo="Typo.body2" Class="muted-text">
                                 Learning what changes on its own… @Math.Max(0, Math.Ceiling(BaselineSeconds - Elapsed)) s
                             </MudText>
                         </div>
@@ -71,7 +71,7 @@
                         <span class="learn-rec"></span>
                         <div>
                             <MudText Typo="Typo.subtitle1">Now switch it on, then off</MudText>
-                            <MudText Typo="Typo.body2" Class="vf-muted">
+                            <MudText Typo="Typo.body2" Class="muted-text">
                                 Recording. It stops by itself once the switch is back off.
                             </MudText>
                         </div>
@@ -100,7 +100,7 @@
                         <span class="learn-dot @(_live ? "on" : "")"></span>
                         <div>
                             <MudText Typo="Typo.subtitle1">Check it: switch it on and off once more</MudText>
-                            <MudText Typo="Typo.body2" Class="vf-muted">
+                            <MudText Typo="Typo.body2" Class="muted-text">
                                 @(_checks == 0 ? "The light turns green while the switch is on." : $"Seen switching {_checks} time{(_checks == 1 ? "" : "s")}. Looks right?")
                             </MudText>
                         </div>

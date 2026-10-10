@@ -76,7 +76,7 @@
 </style>
 
 <div class="vf-toolbar">
-    <MudText Typo="Typo.caption" Class="vf-intro vf-muted">
+    <MudText Typo="Typo.caption" Class="vf-intro muted-text">
         Car basics built from the PDM's own blocks: pick the switch and the outputs on each row, the rest is preset.
         Click a function to open or close it.
         @if (Pdms.Count > 1)
@@ -100,7 +100,7 @@
                 var fn = candidate;
                 <MudMenuItem OnClick="@(() => Add(fn))" Icon="@VehicleFunctionIcons.Of(fn)">
                     <div>@fn.Title</div>
-                    <div class="mud-typography-caption vf-muted">@fn.Summary</div>
+                    <div class="mud-typography-caption muted-text">@fn.Summary</div>
                 </MudMenuItem>
             }
         </MudMenu>
@@ -109,7 +109,7 @@
 
 @if (Functions.Count == 0)
 {
-    <MudText Typo="Typo.body2" Class="vf-muted pa-2">
+    <MudText Typo="Typo.body2" Class="muted-text pa-2">
         Nothing added yet. Headlights, turn signals, brake lights and more are ready once you choose their switches and outputs.
     </MudText>
 }
