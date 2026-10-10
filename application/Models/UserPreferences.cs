@@ -10,6 +10,7 @@ public class UserPreferences
 
     public string? SelectedAdapter { get; set; }
     public string? SelectedPort { get; set; }
+    public string WifiAddress { get; set; } = "192.168.4.1";
     public CanBitRate SelectedBitrate { get; set; }
     public NumberFormat IdFormat { get; set; }
 
