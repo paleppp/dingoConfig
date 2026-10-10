@@ -1,410 +1,292 @@
 @using domain.Enums
 @using domain.Devices.Functions
+@using Microsoft.AspNetCore.Components.Web
 @typeparam TDevice where TDevice : domain.Devices.FwDevice
 
 <SparklineHost>
-<div style="overflow-y: auto; height: calc(100vh - 250px); padding: 24px; scrollbar-width: auto; scrollbar-color: #888 transparent;">
-    <MudText Typo="Typo.h6" Class="mb-2">Device</MudText>
-    <MudGrid>
-        @if (Device.Def.HasBattVoltSense)
-        {
-            <MudItem>
-                <MudCard Style="height: 100%">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">@Device.BatteryVoltage.ToString("F1") V</MudText>
-                        <MudText Typo="Typo.body2">Battery Voltage</MudText>
-                        <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BatteryVoltage)"/>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
-        @if (Device.Outputs.Count > 0)
-        {
-            <MudItem>
-                <MudCard Style="height: 100%">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">@Device.TotalCurrent.ToString("F1") A</MudText>
-                        <MudText Typo="Typo.body2">Total Current</MudText>
-                        <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.TotalCurrent)"/>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
-        @if (Device.Def.HasExtTempSensor)
-        {
-            <MudItem>
-                <MudCard Style="height: 100%">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">@Device.BoardTempC.ToString("F1") °C</MudText>
-                        <MudText Typo="Typo.body2">Board Temperature</MudText>
-                        <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BoardTempC)"/>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
-        <MudItem>
-            <MudCard Style="height: 100%">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6">@Device.DeviceState</MudText>
-                    <MudText Typo="Typo.body2">Device State</MudText>
-                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.DeviceState)"/>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
+<div class="dash">
+    <div class="dash-top">
+        <div class="dash-stats">
+            @if (Device.Def.HasBattVoltSense)
+            {
+                <div class="dash-stat">
+                    <span class="dash-label">Battery</span>
+                    <span class="dash-value">@Device.BatteryVoltage.ToString("F1")<small>V</small></span>
+                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BatteryVoltage)" Width="112" Height="22"/>
+                </div>
+            }
+            @if (Device.Outputs.Count > 0)
+            {
+                <div class="dash-stat">
+                    <span class="dash-label">Total current</span>
+                    <span class="dash-value">@Device.TotalCurrent.ToString("F1")<small>A</small></span>
+                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.TotalCurrent)" Width="112" Height="22"/>
+                </div>
+            }
+            @if (Device.Def.HasExtTempSensor)
+            {
+                <div class="dash-stat">
+                    <span class="dash-label">Board temperature</span>
+                    <span class="dash-value">@Device.BoardTempC.ToString("F1")<small>°C</small></span>
+                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BoardTempC)" Width="112" Height="22"/>
+                </div>
+            }
+            <div class="dash-stat @StateClass(Device.DeviceState)">
+                <span class="dash-label">State</span>
+                <span class="dash-value"><span class="dash-led"></span>@Device.DeviceState</span>
+                <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.DeviceState)" Width="112" Height="22"/>
+            </div>
+            <div class="dash-stat">
+                <span class="dash-label">Firmware</span>
+                <span class="dash-value">@Device.Version</span>
+                <span class="dash-note">CAN @GetBitRateDisplay(Device.BitRate)</span>
+            </div>
+            <div class="dash-stat dash-flags @Linked" @attributes="@Link("device", 0, "Device settings")">
+                @if (Device.Def.CanSleep)
+                {
+                    <span class="dash-flag @(Device.SleepEnabled ? "on" : "")"><span class="dash-led"></span>Sleep</span>
+                }
+                <span class="dash-flag @(Device.CanFiltersEnabled ? "on" : "")"><span class="dash-led"></span>CAN filters</span>
+            </div>
+        </div>
 
-        <MudItem>
-            <MudCard Style="height: 100%">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6">@Device.Version</MudText>
-                    <MudText Typo="Typo.body2">FW Version</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
+        <div class="dash-toolbar">
+            @if (!_showDisabled && Hidden > 0)
+            {
+                <span class="dash-hidden">@Hidden disabled hidden</span>
+            }
+            <MudSwitch T="bool" @bind-Value="_showDisabled" Color="Color.Primary" Size="Size.Small">Show disabled</MudSwitch>
+        </div>
+    </div>
 
-        <MudItem>
-            <MudCard Style="height: 100%">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6">@GetBitRateDisplay(Device.BitRate)</MudText>
-                    <MudText Typo="Typo.body2">Bitrate</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        @if (Device.Def.CanSleep)
-        {
-            <MudItem>
-                <MudCard Style="height: 100%">
-                    <MudCardContent Style="align-content: center">
-                        <MudChip T="string" Variant="Variant.Outlined"
-                                 Color="@(Device.SleepEnabled ? Color.Success : Color.Default)"
-                                 Size="Size.Small" Style="min-width: 100px;">
-                            Sleep Enabled
-                        </MudChip>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
-        
-        <MudItem>
-            <MudCard Style="height: 100%">
-                <MudCardContent Style="align-content: center">
-                    <MudChip T="string" Variant="Variant.Outlined"
-                             Color="@(Device.CanFiltersEnabled ? Color.Success : Color.Default)"
-                             Size="Size.Small" Style="min-width: 100px;">
-                        CAN Filters
-                    </MudChip>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-    </MudGrid>
-
-    <MudDivider Class="my-4"/>
+    @if (!_showDisabled && Shown == 0)
+    {
+        <div class="dash-empty">
+            Nothing is enabled on this device yet. Enable outputs and inputs in the Configuration tab,
+            or turn on Show disabled to see them all.
+        </div>
+    }
 
     @* Outputs *@
-    @if (Device.Outputs.Count > 0)
+    @if (Visible(Device.Outputs, o => o.Enabled) is { Count: > 0 } outputs)
     {
-        <MudText Typo="Typo.h6" Class="mb-2">Outputs</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (output, _) in Device.GetOutputs().Select((o, i) => (o, i)))
-            {
-                <MudItem>
-                    <MudCard Class="@(output.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@output.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@GetOutputColor(output.State)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @GetOutputStateText(output.State)
-                                </MudChip>
-                                @if (output.PrimaryOutput < 0)
-                                {
-                                    <MudText Typo="Typo.body2">@output.Current.ToString("F1") A</MudText>
-                                    <Sparkline Source="output" Property="@nameof(Output.Current)"/>
-                                    <MudText Typo="Typo.body2">Reset Count: @output.ResetCount.ToString("D")</MudText>
+        <section>
+            @Head("Outputs", outputs.Count, Device.Outputs.Count)
+            <div class="dash-grid dash-grid-out">
+                @foreach (var output in outputs)
+                {
+                    <div class="dash-out @OutputClass(output.State) @Off(output.Enabled) @Linked"
+                         @attributes="@Link("outputs", output.Number, output.Name)">
+                        <div class="dash-row">
+                            <span class="dash-led"></span>
+                            <span class="dash-name" title="@output.Name">@output.Name</span>
+                            <span class="dash-badge">@GetOutputStateText(output.State)</span>
+                        </div>
+                        @if (output.PrimaryOutput < 0)
+                        {
+                            <div class="dash-amps">
+                                <b>@output.Current.ToString("F1")</b><span>A</span>
+                                <span class="dash-limit">of @output.CurrentLimit.ToString("0.#") A</span>
+                            </div>
+                            <div class="dash-meter" title="Current against the current limit">
+                                <i style="width: @LoadPercent(output)%"></i>
+                            </div>
+                            <Sparkline Source="output" Property="@nameof(Output.Current)" Width="182" Height="26"/>
+                            @if (output.PwmEnabled || output.ResetCount > 0)
+                            {
+                                <div class="dash-foot">
                                     @if (output.PwmEnabled)
                                     {
-                                        <MudText Typo="Typo.body2">@output.CurrentDutyCycle.ToString("F1") %</MudText>
-                                        <MudText Typo="Typo.body2">@output.CalculatedCurrent.ToString("F1") A (Calculated)</MudText>
+                                        <span>PWM @output.CurrentDutyCycle.ToString("F0") %</span>
+                                        <span title="Calculated current">≈ @output.CalculatedCurrent.ToString("F1") A</span>
                                     }
-                                }
-                                else
-                                {
-                                    <MudText Typo="Typo.body2">Following Output: @(output.PrimaryOutput + 1)</MudText>
-                                }
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+                                    @if (output.ResetCount > 0)
+                                    {
+                                        <span class="dash-warn">@output.ResetCount reset@(output.ResetCount == 1 ? "" : "s")</span>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="dash-follow">Follows output @(output.PrimaryOutput + 1)</div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
     }
-    
+
     @* Digital Inputs *@
-    @if (Device.DigitalInputs.Count > 0)
+    @if (Visible(Device.DigitalInputs, i => i.Enabled) is { Count: > 0 } digitalInputs)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Digital Inputs</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (input, _) in Device.GetDigitalInputs().Select((i, idx) => (i, idx)))
-            {
-                <MudItem>
-                    <MudCard Class="@(input.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@input.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(input.State ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @(input.State ? "ON" : "OFF")
-                                </MudChip>
-                                <Sparkline Source="input" Property="@nameof(DigitalInput.State)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Digital inputs", digitalInputs.Count, Device.DigitalInputs.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var input in digitalInputs)
+                {
+                    @Signal("digital-inputs", input.Number, input, nameof(DigitalInput.State), input.Name, input.Enabled, input.State, OnOff(input.State))
+                }
+            </div>
+        </section>
     }
-    
+
     @* Digital Outputs *@
-    @if (Device.DigitalOutputs.Count > 0)
+    @if (Visible(Device.DigitalOutputs, o => o.Enabled) is { Count: > 0 } digitalOutputs)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Digital Outputs</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var output in Device.DigitalOutputs)
-            {
-                <MudItem>
-                    <MudCard>
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@output.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(output.State ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @(output.State ? "ON" : "OFF")
-                                </MudChip>
-                                <Sparkline Source="output" Property="@nameof(DigitalOutput.State)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Digital outputs", digitalOutputs.Count, Device.DigitalOutputs.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var output in digitalOutputs)
+                {
+                    @Signal("digital-outputs", output.Number, output, nameof(DigitalOutput.State), output.Name, output.Enabled, output.State, OnOff(output.State))
+                }
+            </div>
+        </section>
     }
 
     @* Analog Inputs *@
-    @if (Device.AnalogInputs.Count > 0)
+    @if (Visible(Device.AnalogInputs, i => i.Enabled) is { Count: > 0 } analogInputs)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Analog Inputs</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var input in Device.AnalogInputs)
-            {
-                <MudItem>
-                    <MudCard>
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@input.Name</MudText>
-                                <MudText Typo="Typo.body2">@input.Millivolts.ToString("F1") mV</MudText>
-                                <Sparkline Source="input" Property="@nameof(AnalogInput.Millivolts)"/>
-                                <MudText Typo="Typo.body2">Rotary: @input.Rotary.Pos</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(input.Switch.State ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    Digital: @(input.Switch.State ? "ON" : "OFF")
-                                </MudChip>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Analog inputs", analogInputs.Count, Device.AnalogInputs.Count)
+            <div class="dash-grid dash-grid-out">
+                @foreach (var input in analogInputs)
+                {
+                    <div class="dash-out @(input.Switch.State ? "on" : "") @Off(input.Enabled) @Linked"
+                         @attributes="@Link("analog-inputs", input.Number, input.Name)">
+                        <div class="dash-row">
+                            <span class="dash-led" title="Digital state"></span>
+                            <span class="dash-name" title="@input.Name">@input.Name</span>
+                            <span class="dash-badge">@OnOff(input.Switch.State)</span>
+                        </div>
+                        <div class="dash-amps">
+                            <b>@input.Millivolts.ToString("F0")</b><span>mV</span>
+                            <span class="dash-limit">rotary @input.Rotary.Pos</span>
+                        </div>
+                        <Sparkline Source="input" Property="@nameof(AnalogInput.Millivolts)" Width="182" Height="26"/>
+                    </div>
+                }
+            </div>
+        </section>
     }
-    
+
     @* CAN Inputs *@
-    @if (Device.CanInputs.Count > 0)
+    @if (Visible(Device.CanInputs, i => i.Enabled) is { Count: > 0 } canInputs)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">CAN Inputs</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (input, _) in Device.GetCanInputs().Select((i, idx) => (i, idx)))
-            {
-                <MudItem>
-                    <MudCard Class="@(input.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@input.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(input.Output ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @input.Value
-                                </MudChip>
-                                <Sparkline Source="input" Property="@nameof(CanInput.Value)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("CAN inputs", canInputs.Count, Device.CanInputs.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var input in canInputs)
+                {
+                    @Signal("can-inputs", input.Number, input, nameof(CanInput.Value), input.Name, input.Enabled, input.Output, input.Value.ToString())
+                }
+            </div>
+        </section>
     }
 
     @* Virtual Inputs *@
-    @if (Device.VirtualInputs.Count > 0)
+    @if (Visible(Device.VirtualInputs, i => i.Enabled) is { Count: > 0 } virtualInputs)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Virtual Inputs</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (input, _) in Device.GetVirtualInputs().Select((i, idx) => (i, idx)))
-            {
-                <MudItem>
-                    <MudCard Class="@(input.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@input.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(input.Value ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @(input.Value ? "ON" : "OFF")
-                                </MudChip>
-                                <Sparkline Source="input" Property="@nameof(VirtualInput.Value)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Virtual inputs", virtualInputs.Count, Device.VirtualInputs.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var input in virtualInputs)
+                {
+                    @Signal("virtual-inputs", input.Number, input, nameof(VirtualInput.Value), input.Name, input.Enabled, input.Value, OnOff(input.Value))
+                }
+            </div>
+        </section>
     }
 
-    @* Condition *@
-    @if (Device.Conditions.Count > 0)
+    @* Conditions *@
+    @if (Visible(Device.Conditions, c => c.Enabled) is { Count: > 0 } conditions)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Conditions</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (condition, _) in Device.GetConditions().Select((i, idx) => (i, idx)))
-            {
-                <MudItem>
-                    <MudCard Class="@(condition.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@condition.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(condition.Value > 0 ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @condition.Value
-                                </MudChip>
-                                <Sparkline Source="condition" Property="@nameof(Condition.Value)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Conditions", conditions.Count, Device.Conditions.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var condition in conditions)
+                {
+                    @Signal("conditions", condition.Number, condition, nameof(Condition.Value), condition.Name, condition.Enabled, condition.Value > 0, condition.Value.ToString())
+                }
+            </div>
+        </section>
     }
 
-    @* Counter *@
-    @if (Device.Counters.Count > 0)
+    @* Counters *@
+    @if (Visible(Device.Counters, c => c.Enabled) is { Count: > 0 } counters)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Conditions</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (counter, _) in Device.GetCounters().Select((i, idx) => (i, idx)))
-            {
-                <MudItem>
-                    <MudCard Class="@(counter.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@counter.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(counter.Value > 0 ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @counter.Value
-                                </MudChip>
-                                <Sparkline Source="counter" Property="@nameof(Counter.Value)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Counters", counters.Count, Device.Counters.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var counter in counters)
+                {
+                    @Signal("counters", counter.Number, counter, nameof(Counter.Value), counter.Name, counter.Enabled, counter.Value > 0, counter.Value.ToString())
+                }
+            </div>
+        </section>
     }
 
-    @* Flasher *@
-    @if (Device.Flashers.Count > 0)
+    @* Flashers *@
+    @if (Visible(Device.Flashers, f => f.Enabled) is { Count: > 0 } flashers)
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Flashers</MudText>
-        <MudGrid Spacing="2">
-            @foreach (var (flasher, _) in Device.GetFlashers().Select((i, idx) => (i, idx)))
-            {
-                <MudItem>
-                    <MudCard Class="@(flasher.Enabled ? "" : "card-disabled")">
-                        <MudCardContent>
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@flasher.Name</MudText>
-                                <MudChip T="string" Variant="Variant.Outlined"
-                                         Color="@(flasher.Value ? Color.Success : Color.Default)"
-                                         Size="Size.Small" Style="min-width: 100px;">
-                                    @(flasher.Value ? "ON" : "OFF")
-                                </MudChip>
-                                <Sparkline Source="flasher" Property="@nameof(Flasher.Value)"/>
-                            </MudStack>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+        <section>
+            @Head("Flashers", flashers.Count, Device.Flashers.Count)
+            <div class="dash-grid dash-grid-sig">
+                @foreach (var flasher in flashers)
+                {
+                    @Signal("flashers", flasher.Number, flasher, nameof(Flasher.Value), flasher.Name, flasher.Enabled, flasher.Value, OnOff(flasher.Value))
+                }
+            </div>
+        </section>
     }
 
     @* Wiper *@
-    @if (Device.Def.HasWipers)
+    @if (Device.Def.HasWipers && (Device.Wipers.Enabled || _showDisabled))
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Wiper</MudText>
-        <MudCard Class="@(Device.Wipers.Enabled ? "" : "card-disabled")" Style="max-width: 200px">
-            <MudCardContent>
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudText Typo="Typo.body1">@Device.Wipers.Name</MudText>
-                    <MudChip T="string" Variant="Variant.Outlined"
-                             Color="@(Device.Wipers.SlowState ? Color.Success : Color.Default)"
-                             Size="Size.Small" Style="min-width: 100px;">
-                        Slow
-                    </MudChip>
-                    <MudChip T="string" Variant="Variant.Outlined"
-                             Color="@(Device.Wipers.FastState ? Color.Success : Color.Default)"
-                             Size="Size.Small" Style="min-width: 100px;">
-                        Fast
-                    </MudChip>
-                    <MudText Typo="Typo.body2">Mode: @Device.Wipers.Mode.ToString()</MudText>
-                    <Sparkline Source="Device.Wipers" Property="@nameof(Wiper.State)"/>
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
+        var wiper = Device.Wipers;
+        <section>
+            @Head("Wiper", 1, 1)
+            <div class="dash-grid dash-grid-out">
+                <div class="dash-out @(wiper.State is WiperState.Parked ? "" : "on") @Off(wiper.Enabled) @Linked"
+                     @attributes="@Link("wiper", 0, wiper.Name)">
+                    <div class="dash-row">
+                        <span class="dash-led"></span>
+                        <span class="dash-name" title="@wiper.Name">@wiper.Name</span>
+                        <span class="dash-badge">@wiper.State</span>
+                    </div>
+                    <div class="dash-chips">
+                        <span class="dash-flag @(wiper.SlowState ? "on" : "")"><span class="dash-led"></span>Slow</span>
+                        <span class="dash-flag @(wiper.FastState ? "on" : "")"><span class="dash-led"></span>Fast</span>
+                        <span class="dash-limit">mode @wiper.Mode</span>
+                    </div>
+                    <Sparkline Source="wiper" Property="@nameof(Wiper.State)" Width="182" Height="26"/>
+                </div>
+            </div>
+        </section>
     }
-    
+
     @* Starter Disable *@
-    @if (Device.Def.HasStarterDisable)
+    @if (Device.Def.HasStarterDisable && (Device.StarterDisable.Enabled || _showDisabled))
     {
-        <MudDivider Class="my-4"/>
-        <MudText Typo="Typo.h6" Class="mb-2">Starter Disable</MudText>
-        <MudCard Class="@(Device.StarterDisable.Enabled ? "" : "card-disabled")" Style="max-width: 200px">
-            <MudCardContent>
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudText Typo="Typo.body1">@Device.StarterDisable.Name</MudText>
-                    @for (var i = 0; i < Device.StarterDisable.OutputsDisabled.Count; i++)
-                    {
-                        <MudChip T="bool"
-                                 Color="@(Device.StarterDisable.OutputsDisabled[i] ? Color.Success : Color.Default)"
-                                 Text="@($"Output {i + 1}")"
-                                 Size="Size.Small"
-                                 Variant="Variant.Outlined"/>
-                    }
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
+        var starter = Device.StarterDisable;
+        <section>
+            @Head("Starter disable", 1, 1)
+            <div class="dash-grid dash-grid-out">
+                <div class="dash-out @Off(starter.Enabled) @Linked"
+                     @attributes="@Link("starter-disable", 0, starter.Name)">
+                    <div class="dash-row">
+                        <span class="dash-name" title="@starter.Name">@starter.Name</span>
+                    </div>
+                    <div class="dash-chips">
+                        @for (var i = 0; i < starter.OutputsDisabled.Count; i++)
+                        {
+                            <span class="dash-flag @(starter.OutputsDisabled[i] ? "on" : "")"><span class="dash-led"></span>Output @(i + 1)</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
     }
 </div>
 </SparklineHost>
@@ -412,12 +294,97 @@
 @code {
     [Parameter, EditorRequired] public TDevice Device { get; set; } = null!;
 
-    private static Color GetOutputColor(OutState state) => state switch
+    /// <summary>Opens a block in the Configuration tab; without it the tiles are not clickable</summary>
+    [Parameter] public EventCallback<ConfigTarget> OnOpen { get; set; }
+
+    private bool _showDisabled;
+
+    private static readonly Dictionary<string, object> NoLink = new();
+
+    private string Linked => OnOpen.HasDelegate ? "dash-link" : "";
+
+    // Click or Enter on a tile opens its block in the Configuration tab
+    private IReadOnlyDictionary<string, object> Link(string section, int number, string name)
     {
-        OutState.On => Color.Success,
-        OutState.Overcurrent => Color.Warning,
-        OutState.Fault => Color.Error,
-        _ => Color.Default // Off
+        if (!OnOpen.HasDelegate) return NoLink;
+
+        var target = new ConfigTarget(section, number);
+        return new Dictionary<string, object>
+        {
+            ["role"] = "button",
+            ["tabindex"] = "0",
+            ["aria-label"] = $"{name}: open in Configuration",
+            ["onclick"] = EventCallback.Factory.Create<MouseEventArgs>(this, () => OnOpen.InvokeAsync(target)),
+            ["onkeydown"] = EventCallback.Factory.Create<KeyboardEventArgs>(this,
+                e => e.Key == "Enter" ? OnOpen.InvokeAsync(target) : Task.CompletedTask)
+        };
+    }
+
+    private List<T> Visible<T>(IEnumerable<T> items, Func<T, bool> enabled) =>
+        _showDisabled ? items.ToList() : items.Where(enabled).ToList();
+
+    /// <summary>Everything the dashboard can show that is enabled</summary>
+    private int Shown => Count(true);
+
+    /// <summary>Everything left out because it is disabled</summary>
+    private int Hidden => Count(false);
+
+    private int Count(bool enabled)
+    {
+        var flags = Device.Outputs.Select(o => o.Enabled)
+            .Concat(Device.DigitalInputs.Select(i => i.Enabled))
+            .Concat(Device.DigitalOutputs.Select(o => o.Enabled))
+            .Concat(Device.AnalogInputs.Select(i => i.Enabled))
+            .Concat(Device.CanInputs.Select(i => i.Enabled))
+            .Concat(Device.VirtualInputs.Select(i => i.Enabled))
+            .Concat(Device.Conditions.Select(c => c.Enabled))
+            .Concat(Device.Counters.Select(c => c.Enabled))
+            .Concat(Device.Flashers.Select(f => f.Enabled));
+        if (Device.Def.HasWipers) flags = flags.Append(Device.Wipers.Enabled);
+        if (Device.Def.HasStarterDisable) flags = flags.Append(Device.StarterDisable.Enabled);
+        return flags.Count(f => f == enabled);
+    }
+
+    private RenderFragment Head(string title, int shown, int total) =>
+        @<div class="dash-head">
+            <span class="dash-title">@title</span>
+            @if (total > 1)
+            {
+                <span class="dash-count">@(shown == total ? total.ToString() : $"{shown} of {total}")</span>
+            }
+        </div>;
+
+    // One live value: a light, its name and value, and a short trend under them
+    private RenderFragment Signal(string section, int number, object source, string property, string name, bool enabled,
+        bool active, string value) =>
+        @<div class="dash-sig @(active ? "on" : "") @Off(enabled) @Linked" @attributes="@Link(section, number, name)">
+            <span class="dash-led"></span>
+            <span class="dash-name" title="@name">@name</span>
+            <span class="dash-val">@value</span>
+            <Sparkline Source="source" Property="@property" Width="158" Height="16"/>
+        </div>;
+
+    private static string Off(bool enabled) => enabled ? "" : "is-disabled";
+
+    private static string OnOff(bool state) => state ? "ON" : "OFF";
+
+    private static double LoadPercent(Output output) =>
+        output.CurrentLimit > 0 ? Math.Clamp(output.Current / output.CurrentLimit * 100, 0, 100) : 0;
+
+    private static string StateClass(DeviceState state) => state switch
+    {
+        DeviceState.Run => "on",
+        DeviceState.OverTemp => "warn",
+        DeviceState.Error => "fault",
+        _ => ""
+    };
+
+    private static string OutputClass(OutState state) => state switch
+    {
+        OutState.On => "on",
+        OutState.Overcurrent => "warn",
+        OutState.Fault => "fault",
+        _ => ""
     };
 
     private static string GetOutputStateText(OutState state) => state switch
@@ -433,7 +400,7 @@
         domain.Enums.CanBitRate.BitRate1000K => "1000K",
         domain.Enums.CanBitRate.BitRate500K => "500K",
         domain.Enums.CanBitRate.BitRate250K => "250K",
-        domain.Enums.CanBitRate.BitRate125K => "125K",  
+        domain.Enums.CanBitRate.BitRate125K => "125K",
         domain.Enums.CanBitRate.BitRate100K => "100K",
         _ => "Unknown"
     };
