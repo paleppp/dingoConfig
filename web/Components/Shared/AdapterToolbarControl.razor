@@ -2,6 +2,7 @@
 @using application.Services
 @using domain.Interfaces
 @using domain.Enums
+@using infrastructure.Adapters
 @inject ICommsAdapterManager CommsAdapterManager
 @inject NotificationService Notification
 @inject SimPlayback SimPlayback
@@ -82,7 +83,7 @@
                     }
                 </MudSelect>
 
-                @if (_selectedAdapterType == "WiFi")
+                @if (_selectedAdapterType == "WiFi" && _wifiManual)
                 {
                     <MudTextField @bind-Value="_wifiAddress"
                                   Label="Bridge address"
@@ -90,8 +91,50 @@
                                   HelperText="Port 3333 unless given, e.g. 192.168.1.50:3333"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense"
-                                  Class="mb-2"
+                                  Class="mb-1"
                                   T="string"/>
+                    <MudButton Variant="Variant.Text" Size="Size.Small" Class="mb-2" Style="text-transform: none"
+                               StartIcon="@Icons.Material.Filled.Search"
+                               OnClick="@(() => SetWifiManual(false))">
+                        Find bridges on the network
+                    </MudButton>
+                }
+                else if (_selectedAdapterType == "WiFi")
+                {
+                    <MudSelect Value="_wifiBridge"
+                               ValueChanged="@((string? name) => _wifiBridge = name)"
+                               Label="Bridge"
+                               Variant="Variant.Outlined"
+                               Dense="true"
+                               Class="mb-1"
+                               Disabled="@(_bridges.Count == 0)"
+                               HelperText="@WifiHelperText()"
+                               T="string">
+                        @foreach (var bridge in _bridges)
+                        {
+                            <MudSelectItem T="string" Value="@bridge.Name">
+                                @bridge.Name <span class="mud-text-secondary">· @bridge.Address@(bridge.Busy ? " · in use" : "")</span>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudStack Row="true" Spacing="0" Class="mb-2" AlignItems="AlignItems.Center">
+                        <MudTooltip Text="Search the network again">
+                            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                           Disabled="@_searching" OnClick="@SearchBridges"/>
+                        </MudTooltip>
+                        @if (SelectedBridge is { } shown)
+                        {
+                            <MudTooltip Text="Open the bridge's own page">
+                                <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small"
+                                               Href="@($"http://{shown.Address}/")" Target="_blank"/>
+                            </MudTooltip>
+                        }
+                        <MudSpacer/>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Style="text-transform: none"
+                                   OnClick="@(() => SetWifiManual(true))">
+                            Enter an address instead
+                        </MudButton>
+                    </MudStack>
                 }
 
                 @* Show port selector for USB and SLCAN only (not WiFi, PCAN or Sim) *@
@@ -189,6 +232,10 @@
     private string _selectedAdapterType = string.Empty;
     private string _selectedPort = string.Empty;
     private string _wifiAddress = "192.168.4.1";
+    private bool _wifiManual;
+    private string? _wifiBridge;
+    private IReadOnlyList<WifiBridge> _bridges = [];
+    private bool _searching;
     private CanBitRate _selectedBitrate = CanBitRate.BitRate500K;
 
     protected override void OnInitialized()
@@ -204,6 +251,8 @@
 
         if (!string.IsNullOrWhiteSpace(UserPrefs.Preferences.WifiAddress))
             _wifiAddress = UserPrefs.Preferences.WifiAddress;
+        _wifiManual = UserPrefs.Preferences.WifiManualAddress;
+        _wifiBridge = UserPrefs.Preferences.WifiBridge;
 
         LoadData();
         Refresh();
@@ -219,9 +268,10 @@
         }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
     }
     
-    private void TogglePopover()
+    private async Task TogglePopover()
     {
         _isOpen = !_isOpen;
+        if (_isOpen) await SearchIfWifi();
     }
 
     private void LoadData()
@@ -296,7 +346,7 @@
             {
                 "Sim" => "Simulated",
                 "PCAN" => "PCAN_USBBUS1", // Default PCAN port
-                "WiFi" => _wifiAddress.Trim(),
+                "WiFi" => _wifiManual ? _wifiAddress.Trim() : SelectedBridge?.Endpoint ?? string.Empty,
                 _ => _selectedPort
             };
 
@@ -314,7 +364,11 @@
                 UserPrefs.Preferences.SelectedPort = _selectedPort;
                 UserPrefs.Preferences.SelectedBitrate = _selectedBitrate;
                 if (_selectedAdapterType == "WiFi")
-                    UserPrefs.Preferences.WifiAddress = _wifiAddress.Trim();
+                {
+                    UserPrefs.Preferences.WifiManualAddress = _wifiManual;
+                    if (_wifiManual) UserPrefs.Preferences.WifiAddress = _wifiAddress.Trim();
+                    else UserPrefs.Preferences.WifiBridge = SelectedBridge?.Name;
+                }
                 UserPrefs.Save();
 
                 _isOpen = false; // Close popover on success
@@ -363,9 +417,9 @@
         if (_selectedAdapterType == "Sim")
             return true;
 
-        // WiFi needs the bridge's address instead of a port
+        // WiFi needs a bridge found on the network, or its address
         if (_selectedAdapterType == "WiFi")
-            return infrastructure.Adapters.WifiAdapter.TryParseAddress(_wifiAddress, out _, out _);
+            return _wifiManual ? WifiAdapter.TryParseAddress(_wifiAddress, out _, out _) : SelectedBridge != null;
 
         // USB adapter needs port but not bitrate
         if (_selectedAdapterType == "USB")
@@ -436,10 +490,57 @@
     // Serial adapters pick a port from the list; WiFi, PCAN and Sim do not
     private bool NeedsPort => _selectedAdapterType is not ("WiFi" or "PCAN" or "Sim");
 
-    private void OnAdapterTypeChanged(string obj)
+    private WifiBridge? SelectedBridge => _bridges.FirstOrDefault(b => b.Name == _wifiBridge);
+
+    private string WifiHelperText()
+    {
+        if (_searching && _bridges.Count == 0) return "Searching the network...";
+        if (_bridges.Count == 0) return "No bridge on this network. Is it on the same WiFi as this device?";
+        return SelectedBridge is { Busy: true } ? "Another device is connected to it; connecting takes over" : "";
+    }
+
+    // Asks the network which bridges are there. Keeps the remembered one selected when it answers,
+    // otherwise picks the first.
+    private async Task SearchBridges()
+    {
+        if (_searching) return;
+        _searching = true;
+        StateHasChanged();
+        try
+        {
+            _bridges = await WifiDiscovery.FindAsync(TimeSpan.FromMilliseconds(1500));
+            if (SelectedBridge == null)
+                _wifiBridge = _bridges.FirstOrDefault(b => b.Name == UserPrefs.Preferences.WifiBridge)?.Name
+                              ?? _bridges.FirstOrDefault()?.Name;
+        }
+        catch (Exception ex)
+        {
+            Notification.NewError("Searching for WiFi bridges failed", ex);
+        }
+        finally
+        {
+            _searching = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetWifiManual(bool manual)
+    {
+        _wifiManual = manual;
+        if (!manual) await SearchBridges();
+    }
+
+    private async Task SearchIfWifi()
+    {
+        if (_selectedAdapterType == "WiFi" && !_wifiManual && !_status.IsConnected)
+            await SearchBridges();
+    }
+
+    private async Task OnAdapterTypeChanged(string obj)
     {
         _selectedAdapterType = obj;
         Refresh();
+        await SearchIfWifi();
     }
 
 }
