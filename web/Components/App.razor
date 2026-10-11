@@ -12,6 +12,13 @@
     <link rel="stylesheet" href="lib/uplot/uPlot.min.css" />
     <link rel="stylesheet" href="@($"app.css?v={AppCssVersion}")" />
     <link rel="icon" type="image/png" href="icon.png" />
+    @* Installable as an app: Android and Windows read the manifest, iOS the apple-* tags *@
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="pwa/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="dingoConfig" />
     <HeadOutlet />
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
@@ -22,6 +29,10 @@
     <Routes Mobile="@UiMode.Detect(HttpContext)" />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        // Browsers allow a service worker only over HTTPS or on localhost; elsewhere this is skipped
+        if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    </script>
 </body>
 
 </html>
