@@ -1,0 +1,180 @@
+@page "/install"
+@using Microsoft.AspNetCore.Hosting.Server
+@using web.Services
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject IConfiguration Config
+@inject IServer Server
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+
+<PageTitle>Install app</PageTitle>
+
+@* Install dingoConfig in its own window: right away where the browser allows it, otherwise after
+   trusting this host's certificate once and opening its HTTPS address *@
+<MudContainer MaxWidth="MaxWidth.Small" Class="install-page">
+    <MudText Typo="Typo.h5" Class="mb-1">Install as an app</MudText>
+    <MudText Typo="Typo.body2" Class="install-muted mb-4">
+        dingoConfig on the home screen or the Start menu, opening in a window of its own.
+    </MudText>
+
+    @if (_state == null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+    }
+    else if (_state.Installed)
+    {
+        <MudAlert Severity="Severity.Success">This is the installed app.</MudAlert>
+    }
+    else if (_state.Secure)
+    {
+        @if (_state.CanPrompt)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.InstallMobile" OnClick="Install" Class="mb-4">
+                Install dingoConfig
+            </MudButton>
+        }
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudText Typo="Typo.subtitle2" Class="mb-2">@(_state.CanPrompt ? "Or from the browser's menu" : "From the browser's menu")</MudText>
+            @BrowserSteps(_state.Platform)
+        </MudPaper>
+    }
+    else if (_httpsUrl != null)
+    {
+        <div class="install-step">
+            <span class="install-num">1</span>
+            <div class="install-body">
+                <MudText Typo="Typo.subtitle1">Trust this device's certificate</MudText>
+                <MudText Typo="Typo.body2" Class="install-muted mb-3">
+                    Once on each phone or computer. The certificate is this device's own and is valid
+                    only for addresses on your local network, never for sites on the internet.
+                </MudText>
+                <MudButton Href="@InstallInfo.CaCertificatePath" Variant="Variant.Outlined" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Download" Class="mb-3">
+                    Download certificate
+                </MudButton>
+                <MudExpansionPanels Outlined="true" Dense="true">
+                    @foreach (var (platform, title) in Platforms)
+                    {
+                        <MudExpansionPanel Text="@title" Expanded="@(_state.Platform == platform)">
+                            @CertificateSteps(platform)
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            </div>
+        </div>
+
+        <div class="install-step">
+            <span class="install-num">2</span>
+            <div class="install-body">
+                <MudText Typo="Typo.subtitle1">Open the secure address</MudText>
+                <MudText Typo="Typo.body2" Class="install-muted mb-3">
+                    and install from this same page there. Use that address from then on.
+                </MudText>
+                <MudButton Href="@_httpsUrl" Variant="Variant.Filled" Color="Color.Primary"
+                           EndIcon="@Icons.Material.Filled.OpenInNew">
+                    @_httpsUrl
+                </MudButton>
+            </div>
+        </div>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-3">
+            Browsers install apps only from HTTPS or from this same computer. Open dingoConfig as
+            http://localhost:5000 on the computer it runs on, or use a host that offers HTTPS.
+        </MudAlert>
+        @if (_state.Platform == "ios")
+        {
+            <MudPaper Outlined="true" Class="pa-4">@BrowserSteps("ios")</MudPaper>
+        }
+    }
+</MudContainer>
+
+@code {
+    private static readonly (string Platform, string Title)[] Platforms =
+    [
+        ("android", "Android"),
+        ("ios", "iPhone and iPad"),
+        ("windows", "Windows")
+    ];
+
+    private BrowserState? _state;
+    private string? _httpsUrl;
+    private IJSObjectReference? _module;
+
+    private sealed record BrowserState(string Platform, bool Secure, bool Installed, bool CanPrompt);
+
+    protected override void OnInitialized()
+    {
+        // The secure address is this same host on the HTTPS port, once there is a certificate to trust
+        if (InstallInfo.CaCertificateFile(Config) != null && InstallInfo.HttpsPort(Server) is { } port)
+        {
+            var here = new Uri(Nav.BaseUri);
+            _httpsUrl = new UriBuilder("https", here.Host, port, "install").Uri.ToString();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/install.js");
+        _state = await _module.InvokeAsync<BrowserState>("state");
+        StateHasChanged();
+    }
+
+    private async Task Install()
+    {
+        if (_module == null) return;
+        await _module.InvokeAsync<string>("install");
+        _state = await _module.InvokeAsync<BrowserState>("state");
+    }
+
+    private static RenderFragment BrowserSteps(string platform) => platform switch
+    {
+        "ios" => @<ol class="install-list">
+                     <li>Open this page in <b>Safari</b>.</li>
+                     <li>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</li>
+                 </ol>,
+        "android" => @<ol class="install-list">
+                         <li>In Chrome, tap the <b>⋮</b> menu.</li>
+                         <li>Tap <b>Install app</b> (on some phones <b>Add to Home screen</b> → <b>Install</b>).</li>
+                     </ol>,
+        _ => @<ol class="install-list">
+                 <li>In Edge: <b>⋯</b> menu → <b>Apps</b> → <b>Install this site as an app</b>.</li>
+                 <li>In Chrome: the install icon at the right end of the address bar, or <b>⋮</b> → <b>Cast, save and share</b> → <b>Install page as app</b>.</li>
+             </ol>
+    };
+
+    private static RenderFragment CertificateSteps(string platform) => platform switch
+    {
+        "android" => @<ol class="install-list">
+                         <li>Download the certificate above.</li>
+                         <li>Open <b>Settings</b> and search for <b>CA certificate</b> (usually Security → More security settings → Encryption &amp; credentials → Install a certificate).</li>
+                         <li>Choose <b>CA certificate</b>, confirm <b>Install anyway</b>, and pick <b>dingoConfig-CA.crt</b> from Downloads.</li>
+                     </ol>,
+        "ios" => @<ol class="install-list">
+                     <li>Download the certificate above in <b>Safari</b> and <b>Allow</b> the profile.</li>
+                     <li><b>Settings</b> → <b>Profile Downloaded</b> → <b>Install</b>.</li>
+                     <li><b>Settings</b> → General → About → <b>Certificate Trust Settings</b>, and turn on the dingoConfig certificate.</li>
+                 </ol>,
+        _ => @<ol class="install-list">
+                 <li>Download the certificate above and open it.</li>
+                 <li><b>Install Certificate…</b> → Current User → <b>Place all certificates in the following store</b> → <b>Trusted Root Certification Authorities</b>.</li>
+                 <li><b>Finish</b>, and <b>Yes</b> to the security warning. Edge and Chrome use it straight away; restart them if they were open.</li>
+             </ol>
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module == null) return;
+        try
+        {
+            await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

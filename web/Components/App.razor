@@ -32,6 +32,9 @@
     <script>
         // Browsers allow a service worker only over HTTPS or on localhost; elsewhere this is skipped
         if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js").catch(() => {});
+        // Chrome and Edge offer installing once, early; kept for the Install button on the Install app page
+        window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); window.dcInstallPrompt = e; });
+        window.addEventListener("appinstalled", () => { window.dcInstallPrompt = null; });
     </script>
 </body>
 

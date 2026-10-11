@@ -95,14 +95,19 @@ _ = app.Services.GetRequiredService<PlotService>();
 var userPrefsManager = app.Services.GetRequiredService<UserPreferencesManager>();
 userPrefsManager.Initialize();
 
+// HttpsRedirection=false serves plain HTTP beside HTTPS rather than redirecting it. A host
+// with its own certificate authority needs that: until a phone trusts the authority, plain
+// HTTP is the only way it can open the page that hands the certificate out.
+var httpsRedirection = app.Configuration.GetValue("HttpsRedirection", true);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
+    if (httpsRedirection) app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (httpsRedirection) app.UseHttpsRedirection();
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -114,6 +119,13 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// The certificate authority behind this host's HTTPS certificate, for a phone or PC to trust
+// once so dingoConfig can be installed as an app from it (see Install app)
+app.MapGet(InstallInfo.CaCertificatePath, (IConfiguration config) =>
+    InstallInfo.CaCertificateFile(config) is { } ca
+        ? Results.File(ca, "application/x-x509-ca-cert", "dingoConfig-CA.crt")
+        : Results.NotFound());
 
 // Open browser on launch in non-Development environments (e.g., published Release builds)
 var isDevelopment = app.Environment.IsDevelopment();
