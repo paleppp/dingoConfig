@@ -1,0 +1,66 @@
+@inject IDialogService Dialogs
+
+@* The Configuration tab on a phone: each block a row, a tap opens its form *@
+<div class="m-settings">
+    @foreach (var section in MobileBlocks.Sections(Device))
+    {
+        var key = section.Key;
+        if (section.Single)
+        {
+            <button type="button" class="m-row m-row-single" @onclick="@(() => Open(key, 0))">
+                <span class="m-row-main">
+                    <span class="m-row-name">@section.Title</span>
+                    <small>@section.Summary</small>
+                </span>
+                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"/>
+            </button>
+            continue;
+        }
+
+        var showAll = _showAll.Contains(key);
+        var enabled = section.Items.Count(i => i.Enabled);
+        var unused = section.Items.Count - enabled;
+        <section class="m-group">
+            <div class="m-group-head">
+                <span>@section.Title</span>
+                <span class="m-count">@enabled of @section.Items.Count in use</span>
+            </div>
+            @foreach (var item in section.Items.Where(i => showAll || i.Enabled))
+            {
+                var number = item.Number;
+                <button type="button" class="m-row @(item.Enabled ? "" : "is-off") @(item.Active ? "on" : "")"
+                        @onclick="@(() => Open(key, number))">
+                    <span class="m-dot"></span>
+                    <span class="m-row-main">
+                        <span class="m-row-name">@item.Name</span>
+                        @if (item.Owner != null)
+                        {
+                            <small>@item.Owner</small>
+                        }
+                    </span>
+                    <span class="m-row-value">@(item.Enabled ? item.Value : "off")</span>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"/>
+                </button>
+            }
+            @if (unused > 0)
+            {
+                <button type="button" class="m-more" @onclick="@(() => Toggle(key))">
+                    @(showAll ? "Hide the unused ones" : $"Show {unused} unused")
+                </button>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public domain.Devices.FwDevice Device { get; set; } = null!;
+
+    private readonly HashSet<string> _showAll = [];
+
+    private void Toggle(string key)
+    {
+        if (!_showAll.Remove(key)) _showAll.Add(key);
+    }
+
+    private Task Open(string section, int number) => MobileBlockDialog.OpenAsync(Dialogs, Device, section, number);
+}

@@ -1,5 +1,7 @@
 @rendermode InteractiveServer
 
+@* The phone layout is picked once per page load, see UiMode *@
+<CascadingValue Value="_ui" IsFixed="true">
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
@@ -12,3 +14,12 @@
         </LayoutView>
     </NotFound>
 </Router>
+</CascadingValue>
+
+@code {
+    [Parameter] public bool Mobile { get; set; }
+
+    private web.Services.UiMode _ui = new(false);
+
+    protected override void OnParametersSet() => _ui = new web.Services.UiMode(Mobile);
+}

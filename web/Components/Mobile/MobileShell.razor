@@ -1,0 +1,106 @@
+@using application.Services
+@using web.Components.Shared
+@inject NavigationManager Nav
+@inject ConfigFileManager FileManager
+@inject IJSRuntime JS
+@implements IDisposable
+
+@* The phone layout: a slim bar on top, the page, and the main places at the bottom within thumb reach *@
+<div class="m-shell">
+    <header class="m-top">
+        <span class="m-brand">dingoConfig</span>
+        <span class="m-file">@FileManager.CurrentFileName</span>
+        <span class="m-grow"></span>
+        <AdapterToolbarControl/>
+    </header>
+
+    <main class="m-main">
+        @ChildContent
+    </main>
+
+    <nav class="m-nav" aria-label="Main">
+        <a href="" class="@Current("")">
+            <MudIcon Icon="@Icons.Material.Outlined.Home"/>
+            <span>Home</span>
+        </a>
+        <a href="devices" class="@Current("device")">
+            <MudIcon Icon="@Icons.Material.Outlined.Memory"/>
+            <span>Devices</span>
+        </a>
+        <button type="button" class="@(_sheet == "project" ? "active" : "")" @onclick="@(() => _sheet = "project")">
+            <MudIcon Icon="@Icons.Material.Outlined.FolderOpen"/>
+            <span>Project</span>
+        </button>
+        <button type="button" class="@(_sheet == "more" ? "active" : "")" @onclick="@(() => _sheet = "more")">
+            <MudIcon Icon="@Icons.Material.Outlined.Menu"/>
+            <span>More</span>
+        </button>
+    </nav>
+</div>
+
+<MudDrawer Open="@(_sheet == "project")" OpenChanged="@(open => { if (!open) _sheet = null; })"
+           Anchor="Anchor.Bottom" Variant="@DrawerVariant.Temporary" Elevation="8" Class="m-sheet">
+    <div class="m-sheet-body">
+        <div class="m-sheet-title">Project</div>
+        <div class="m-sheet-tools">
+            <FileToolbar OnNew="OnNew" OnOpen="OnOpen" OnSave="OnSave" OnSaveAs="OnSaveAs"/>
+        </div>
+        <p class="m-sheet-hint">New, open, save and save as. Recent projects are on the home page.</p>
+    </div>
+</MudDrawer>
+
+<MudDrawer Open="@(_sheet == "more")" OpenChanged="@(open => { if (!open) _sheet = null; })"
+           Anchor="Anchor.Bottom" Variant="@DrawerVariant.Temporary" Elevation="8" Class="m-sheet">
+    <div class="m-sheet-body">
+        <div class="m-sheet-title">More</div>
+        <a class="m-sheet-link" href="can-log" @onclick="Close"><MudIcon Icon="@Icons.Material.Outlined.Article"/>CAN log</a>
+        <a class="m-sheet-link" href="system-log" @onclick="Close"><MudIcon Icon="@Icons.Material.Outlined.Notes"/>Messages</a>
+        <a class="m-sheet-link" href="plot" @onclick="Close"><MudIcon Icon="@Icons.Material.Outlined.StackedLineChart"/>Plot</a>
+        <button type="button" class="m-sheet-link" @onclick="Help"><MudIcon Icon="@Icons.Material.Outlined.HelpOutline"/>Help</button>
+        <button type="button" class="m-sheet-link" @onclick="DesktopView"><MudIcon Icon="@Icons.Material.Outlined.DesktopWindows"/>Desktop view</button>
+    </div>
+</MudDrawer>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnNew { get; set; }
+    [Parameter] public EventCallback<string> OnOpen { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback<string> OnSaveAs { get; set; }
+    [Parameter] public EventCallback OnHelp { get; set; }
+
+    private string? _sheet;
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        InvokeAsync(() =>
+        {
+            _sheet = null;
+            StateHasChanged();
+        });
+
+    // "" is the home page; other prefixes match their pages and those under them
+    private string Current(string prefix)
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0];
+        var active = prefix.Length == 0 ? path.Length == 0 : path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+        return active ? "active" : "";
+    }
+
+    private void Close() => _sheet = null;
+
+    private async Task Help()
+    {
+        _sheet = null;
+        await OnHelp.InvokeAsync();
+    }
+
+    private async Task DesktopView()
+    {
+        await using var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/ui-mode.js");
+        await module.InvokeVoidAsync("setView", "desktop");
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

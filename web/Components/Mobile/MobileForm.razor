@@ -1,0 +1,172 @@
+@using System.Globalization
+@using domain.Models
+@using web.Components.Dialogs
+@using web.Services
+@inject IDialogService Dialogs
+@inject NotificationService Notification
+
+@* A block's settings as one column of large controls, built from MobileBlocks' field list *@
+<div class="m-form">
+    @foreach (var field in Fields)
+    {
+        if (field.Shown?.Invoke() == false) continue;
+
+        switch (field)
+        {
+            case HeadingField heading:
+                <div class="m-form-heading">@heading.Label</div>
+                break;
+
+            case LiveField live:
+                <div class="m-form-row m-form-live">
+                    <span class="m-form-label">@live.Label</span>
+                    <span class="m-form-value">@live.Get()</span>
+                </div>
+                break;
+
+            case ToggleField toggle:
+                <label class="m-form-row m-form-toggle @(toggle.Locked ? "is-locked" : "")">
+                    <span class="m-form-label">
+                        @toggle.Label
+                        @if (toggle.Help != null)
+                        {
+                            <small>@toggle.Help</small>
+                        }
+                    </span>
+                    <MudSwitch T="bool" Value="@toggle.Get()" ValueChanged="@(v => toggle.Set(v))"
+                               Color="Color.Primary" Disabled="@toggle.Locked"/>
+                </label>
+                break;
+
+            case TextField text:
+                <MudTextField T="string" Label="@text.Label" Value="@text.Get()" ValueChanged="@(v => text.Set(v ?? ""))"
+                              MaxLength="@text.MaxLength" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Disabled="@text.Locked" HelperText="@text.Help" Class="m-form-input"/>
+                break;
+
+            case NumberField number:
+                <MudNumericField T="double" Label="@number.Label" Value="@number.Get()"
+                                 ValueChanged="@(v => SetNumber(number, v))"
+                                 Min="@number.Min" Max="@number.Max" Format="@NumberFormat(number)"
+                                 Culture="CultureInfo.InvariantCulture"
+                                 Adornment="@(number.Unit != null ? Adornment.End : Adornment.None)"
+                                 AdornmentText="@number.Unit" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Disabled="@number.Locked" HelperText="@number.Help" Class="m-form-input"
+                                 InputMode="@DecimalKeyboard"/>
+                break;
+
+            case ChoiceField choice:
+                <MudSelect T="int" Label="@choice.Label" Value="@choice.Get()" ValueChanged="@(v => choice.Set(v))"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@choice.Locked"
+                           HelperText="@choice.Help" Class="m-form-input">
+                    @foreach (var (value, label) in choice.Options)
+                    {
+                        <MudSelectItem T="int" Value="@value">@label</MudSelectItem>
+                    }
+                </MudSelect>
+                break;
+
+            case VariableField variable:
+                <button type="button" class="m-form-row m-form-pick" disabled="@variable.Locked"
+                        @onclick="@(() => PickVariable(variable))">
+                    <span class="m-form-label">
+                        @variable.Label
+                        <small>@VariableText(variable.Get())</small>
+                    </span>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"/>
+                </button>
+                break;
+
+            case CanIdField id:
+                <MudTextField T="string" Label="@id.Label" Value="@MobileBlocks.Hex(id.Get())"
+                              ValueChanged="@(v => SetId(id, v))" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Disabled="@id.Locked" HelperText="@(id.Help ?? "Hex; above 0x7FF it is an extended ID")"
+                              Class="m-form-input" autocapitalize="@("characters")"/>
+                break;
+
+            case HexBytesField bytes:
+                <MudTextField T="string" Label="@bytes.Label" Value="@BytesText(bytes.Get())"
+                              ValueChanged="@(v => SetBytes(bytes, v))" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Disabled="@bytes.Locked" HelperText="@bytes.Help" Class="m-form-input"
+                              autocapitalize="@("characters")"/>
+                break;
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public domain.Devices.FwDevice Device { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<FormField> Fields { get; set; } = [];
+
+    // The phone's keyboard with digits and a decimal point
+    private const MudBlazor.InputMode DecimalKeyboard = MudBlazor.InputMode.@decimal;
+
+    private static string NumberFormat(NumberField f) => f.Decimals == 0 ? "0" : "0." + new string('#', f.Decimals);
+
+    private void SetNumber(NumberField field, double value)
+    {
+        if (value < field.Min || value > field.Max)
+            Notification.NewWarning($"{field.Label} is {field.Min} to {field.Max}{(field.Unit != null ? " " + field.Unit : "")}");
+        field.Set(Math.Clamp(value, field.Min, field.Max));
+    }
+
+    private void SetId(CanIdField field, string? text)
+    {
+        var digits = (text ?? "").Trim();
+        if (digits.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) digits = digits[2..];
+        if (!int.TryParse(digits, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var id) || id < 0 || id > 0x1FFFFFFF)
+        {
+            Notification.NewWarning($"{field.Label}: give a hex ID, 0 to 1FFFFFFF");
+            return;
+        }
+        field.Set(id);
+    }
+
+    private static string BytesText(IReadOnlyList<int> bytes) =>
+        string.Join(" ", bytes.Select(b => Math.Clamp(b, 0, 255).ToString("X2")));
+
+    private void SetBytes(HexBytesField field, string? text)
+    {
+        var digits = new string((text ?? "").Where(c => !char.IsWhiteSpace(c)).ToArray());
+        if (digits.Length % 2 != 0 || digits.Length > 16)
+        {
+            Notification.NewWarning($"{field.Label}: up to 8 bytes, two hex digits each");
+            return;
+        }
+
+        var bytes = new byte[digits.Length / 2];
+        for (var i = 0; i < bytes.Length; i++)
+        {
+            if (!byte.TryParse(digits.AsSpan(i * 2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out bytes[i]))
+            {
+                Notification.NewWarning($"{field.Label} is not valid hex");
+                return;
+            }
+        }
+        field.Set(bytes);
+    }
+
+    private string VariableText(int index)
+    {
+        if (index == 0) return "Not used";
+        var variable = Device.VarMap.Find(v => v.VariableIndex == index);
+        if (variable == null) return "Not found";
+        var name = variable.GetName();
+        return name.Length == 0 ? "Not used" : $"{name} · {variable.PropertyName}";
+    }
+
+    // The variable list, full screen as everything else here
+    private async Task PickVariable(VariableField field)
+    {
+        var parameters = new DialogParameters<VarMapSelectionDialog>
+        {
+            { x => x.Device, Device },
+            { x => x.Datatypes, field.Types }
+        };
+        var options = new DialogOptions { FullScreen = true, CloseButton = true };
+        var dialog = await Dialogs.ShowAsync<VarMapSelectionDialog>(field.Label, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: DeviceVariable chosen })
+            field.Set(chosen.VariableIndex);
+    }
+}

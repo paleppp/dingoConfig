@@ -5,7 +5,7 @@
 @typeparam TDevice where TDevice : domain.Devices.FwDevice
 
 <SparklineHost>
-<div class="dash">
+<div class="dash @(Compact ? "dash-compact" : "")">
     <div class="dash-top">
         <div class="dash-stats">
             @if (Device.Def.HasBattVoltSense)
@@ -13,7 +13,7 @@
                 <div class="dash-stat">
                     <span class="dash-label">Battery</span>
                     <span class="dash-value">@Device.BatteryVoltage.ToString("F1")<small>V</small></span>
-                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BatteryVoltage)" Width="112" Height="22"/>
+                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BatteryVoltage)" Width="@StatSpark" Height="22"/>
                 </div>
             }
             @if (Device.Outputs.Count > 0)
@@ -21,7 +21,7 @@
                 <div class="dash-stat">
                     <span class="dash-label">Total current</span>
                     <span class="dash-value">@Device.TotalCurrent.ToString("F1")<small>A</small></span>
-                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.TotalCurrent)" Width="112" Height="22"/>
+                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.TotalCurrent)" Width="@StatSpark" Height="22"/>
                 </div>
             }
             @if (Device.Def.HasExtTempSensor)
@@ -29,13 +29,13 @@
                 <div class="dash-stat">
                     <span class="dash-label">Board temperature</span>
                     <span class="dash-value">@Device.BoardTempC.ToString("F1")<small>°C</small></span>
-                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BoardTempC)" Width="112" Height="22"/>
+                    <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.BoardTempC)" Width="@StatSpark" Height="22"/>
                 </div>
             }
             <div class="dash-stat @StateClass(Device.DeviceState)">
                 <span class="dash-label">State</span>
                 <span class="dash-value"><span class="dash-led"></span>@Device.DeviceState</span>
-                <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.DeviceState)" Width="112" Height="22"/>
+                <Sparkline Source="Device" Property="@nameof(domain.Devices.FwDevice.DeviceState)" Width="@StatSpark" Height="22"/>
             </div>
             <div class="dash-stat">
                 <span class="dash-label">Firmware</span>
@@ -95,7 +95,7 @@
                             <span>Woken by @WakeText(ign.WakeSource)</span>
                         }
                     </div>
-                    <Sparkline Source="ign" Property="@nameof(Ignition.State)" Width="274" Height="26"/>
+                    <Sparkline Source="ign" Property="@nameof(Ignition.State)" Width="@WideSpark" Height="26"/>
                 </div>
             </div>
         </section>
@@ -130,7 +130,7 @@
                             <div class="dash-meter" title="Current against the current limit">
                                 <i style="width: @LoadPercent(output)%"></i>
                             </div>
-                            <Sparkline Source="output" Property="@nameof(Output.Current)" Width="182" Height="26"/>
+                            <Sparkline Source="output" Property="@nameof(Output.Current)" Width="@OutSpark" Height="26"/>
                             @if (output.PwmEnabled || output.ResetCount > 0)
                             {
                                 <div class="dash-foot">
@@ -203,7 +203,7 @@
                             <b>@input.Millivolts.ToString("F0")</b><span>mV</span>
                             <span class="dash-limit">rotary @input.Rotary.Pos</span>
                         </div>
-                        <Sparkline Source="input" Property="@nameof(AnalogInput.Millivolts)" Width="182" Height="26"/>
+                        <Sparkline Source="input" Property="@nameof(AnalogInput.Millivolts)" Width="@OutSpark" Height="26"/>
                     </div>
                 }
             </div>
@@ -328,7 +328,7 @@
                         <span class="dash-flag @(wiper.FastState ? "on" : "")"><span class="dash-led"></span>Fast</span>
                         <span class="dash-limit">mode @wiper.Mode</span>
                     </div>
-                    <Sparkline Source="wiper" Property="@nameof(Wiper.State)" Width="182" Height="26"/>
+                    <Sparkline Source="wiper" Property="@nameof(Wiper.State)" Width="@OutSpark" Height="26"/>
                 </div>
             </div>
         </section>
@@ -364,6 +364,15 @@
 
     /// <summary>Opens a block in the Configuration tab; without it the tiles are not clickable</summary>
     [Parameter] public EventCallback<ConfigTarget> OnOpen { get; set; }
+
+    /// <summary>Phone layout: two tiles a row, and the page scrolls instead of the dashboard</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    // Sparklines are drawn at a fixed size, so they follow the tile widths
+    private int StatSpark => Compact ? 96 : 112;
+    private int OutSpark => Compact ? 128 : 182;
+    private int SigSpark => Compact ? 128 : 158;
+    private int WideSpark => Compact ? 280 : 274;
 
     private bool _showDisabled;
 
@@ -434,7 +443,7 @@
             <span class="dash-led"></span>
             <span class="dash-name" title="@name">@name</span>
             <span class="dash-val">@value</span>
-            <Sparkline Source="source" Property="@property" Width="158" Height="16"/>
+            <Sparkline Source="source" Property="@property" Width="@SigSpark" Height="16"/>
         </div>;
 
     // A block the PDM does not report live: what it is set to instead of a value

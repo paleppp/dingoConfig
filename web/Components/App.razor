@@ -1,11 +1,13 @@
 @using System.Security.Cryptography
+@using web.Services
 @inject IWebHostEnvironment Env
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#27272f" />
     <base href="/" />
     <link rel="stylesheet" href="lib/uplot/uPlot.min.css" />
     <link rel="stylesheet" href="@($"app.css?v={AppCssVersion}")" />
@@ -17,7 +19,7 @@
 </head>
 
 <body>
-    <Routes />
+    <Routes Mobile="@UiMode.Detect(HttpContext)" />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
@@ -25,6 +27,8 @@
 </html>
 
 @code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
     private static string? _appCssVersion;
 
     // Changes whenever app.css does, so a browser that cached an older one fetches it again

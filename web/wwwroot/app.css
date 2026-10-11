@@ -579,3 +579,462 @@ tr.cfg-jump > td:first-child {
         box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent);
     }
 }
+
+/* ---- Phone layout (web/Components/Mobile) ---- */
+.m-shell {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--mud-palette-background);
+}
+
+.m-top {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: calc(env(safe-area-inset-top, 0px) + 6px) 8px 6px 14px;
+    background: var(--mud-palette-appbar-background);
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-brand {
+    font-size: 1.05rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.m-file {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-grow {
+    flex: 1 1 auto;
+}
+
+.m-top .mud-chip {
+    margin: 0;
+}
+
+.m-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+.m-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--mud-palette-appbar-background);
+    border-top: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-nav a, .m-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 6px 0;
+    border: 0;
+    background: none;
+    color: var(--mud-palette-text-secondary);
+    font: inherit;
+    font-size: 0.7rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.m-nav .active {
+    color: var(--mud-palette-primary);
+}
+
+.m-nav a:focus-visible, .m-nav button:focus-visible, .m-row:focus-visible, .m-sheet-link:focus-visible,
+.m-form-pick:focus-visible, .m-more:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: -2px;
+}
+
+.m-sheet.mud-drawer {
+    height: auto !important;
+    max-height: 85dvh;
+    border-radius: 14px 14px 0 0;
+}
+
+.m-sheet-body {
+    display: grid;
+    gap: 6px;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.m-sheet-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.m-sheet-file, .m-sheet-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-sheet-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.m-sheet-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 48px;
+    padding: 10px 4px;
+    border: 0;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+    background: none;
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Device page */
+.m-device {
+    display: flex;
+    flex-direction: column;
+}
+
+.m-device-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px 6px 14px;
+}
+
+.m-device-name {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.m-device-name span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.m-device-name small {
+    font-size: 0.72rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.m-actions .mud-button-root {
+    min-width: 0;
+    padding: 4px 10px;
+}
+
+.m-dot {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--mud-palette-text-disabled);
+}
+
+.m-dot.on, .on > .m-dot {
+    background: var(--mud-palette-primary);
+    box-shadow: 0 0 6px var(--mud-palette-primary);
+}
+
+.m-tabs .mud-tabs-tabbar {
+    position: sticky;
+    top: 52px;
+    z-index: 10;
+    background: var(--mud-palette-background);
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-tabs .mud-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 4px;
+    font-size: 0.78rem;
+}
+
+.m-pad {
+    padding: 12px;
+}
+
+/* The dashboard on a phone: two tiles a row, the page scrolls */
+.dash.dash-compact {
+    height: auto;
+    overflow: visible;
+    padding: 12px 12px 24px;
+    gap: 16px;
+}
+
+.dash-compact .dash-stats {
+    width: 100%;
+}
+
+.dash-compact .dash-stat {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+}
+
+.dash-compact .dash-grid-out, .dash-compact .dash-grid-sig {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dash-compact .dash-grid-wide {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.dash-compact .dash-toolbar {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+}
+
+.dash-compact .dash-link:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.dash-compact .sparkline {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Settings as a list */
+.m-settings {
+    display: grid;
+    gap: 16px;
+    padding: 8px 0 24px;
+}
+
+.m-group-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 16px 6px;
+    font-weight: 500;
+}
+
+.m-count {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 10px 8px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+    background: var(--mud-palette-surface);
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.m-group .m-row:first-of-type, .m-row-single {
+    border-top: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-row:active {
+    background: color-mix(in srgb, var(--mud-palette-primary) 10%, var(--mud-palette-surface));
+}
+
+.m-row.is-off {
+    opacity: 0.5;
+}
+
+.m-row-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.m-row-name, .m-row-main small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.m-row-main small {
+    font-size: 0.72rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-row-value {
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-row.on .m-row-value {
+    color: var(--mud-palette-primary);
+}
+
+.m-more {
+    padding: 10px 16px;
+    border: 0;
+    background: none;
+    color: var(--mud-palette-primary);
+    font: inherit;
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* A block's form */
+.m-dialog-content {
+    padding-bottom: 8px;
+}
+
+.m-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 8px;
+}
+
+.m-form-heading {
+    margin-top: 10px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    padding: 4px 2px;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-form-label {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.m-form-label small {
+    font-size: 0.75rem;
+    color: var(--mud-palette-text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.m-form-value {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--mud-palette-primary);
+}
+
+.m-form-pick {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+    background: none;
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.m-form-pick:disabled, .m-form-row.is-locked {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.m-form-input.mud-input-control {
+    margin: 0;
+}
+
+/* Phone layout: what the shared pages need on a narrow screen */
+.m-sheet-link {
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.m-tabs .mud-tabs-tabbar-wrapper {
+    width: 100%;
+}
+
+/* Tabs that scroll inside themselves on the desktop scroll with the page here */
+.m-tab-panel div[style*="height: calc(100vh"] {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 12px !important;
+}
+
+/* Vehicle function rows stack: the name, then the switch, then the outputs */
+.m-shell .vf-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.m-shell .vf-line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-shell .vf-line .vf-outs {
+    grid-column: 1;
+}
+
+.m-shell .vf-cols {
+    display: none;
+}
+
+.m-shell .vf-type {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.m-shell .vf-type-chip.mud-chip {
+    width: auto;
+}
+
+.m-shell .vf-pick {
+    height: 34px;
+}

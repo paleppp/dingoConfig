@@ -1,0 +1,73 @@
+@using application.Services
+@using web.Services
+@inject DeviceManager DeviceManager
+@inject NotificationService Notification
+
+@* Read and Write in reach, the rest of the device commands behind the menu *@
+<div class="m-actions">
+    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download"
+               Disabled="@(!Ready)" OnClick="Read"
+               Color="@(NeedsRead ? Color.Warning : Color.Default)" Class="@(NeedsRead ? "flash-button" : "")">
+        Read
+    </MudButton>
+    <MudButton Variant="Variant.Filled" Size="Size.Small" StartIcon="@Icons.Material.Filled.Upload"
+               Disabled="@(!Ready)" OnClick="Write" Color="Color.Primary">
+        Write
+    </MudButton>
+    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight"
+             TransformOrigin="Origin.TopRight" Dense="true" aria-label="More device commands">
+        <MudMenuItem Disabled="@(!Ready)" OnClick="ReadAll" Icon="@Icons.Material.Filled.Download">Read all</MudMenuItem>
+        <MudMenuItem Disabled="@(!Ready)" OnClick="WriteAll" Icon="@Icons.Material.Filled.Upload">Write all</MudMenuItem>
+        <MudMenuItem Disabled="@(!Ready)" OnClick="Burn" Icon="@Icons.Material.Filled.Save">Burn to flash</MudMenuItem>
+        <MudDivider/>
+        <MudMenuItem Disabled="@(!Ready || !Device.Def.CanSleep)" OnClick="Sleep" Icon="@Icons.Material.Filled.Bedtime">Sleep</MudMenuItem>
+        <MudMenuItem Disabled="@(!Ready || !Device.Def.CanSleep)" OnClick="Wakeup" Icon="@Icons.Material.Filled.WbSunny">Wake up</MudMenuItem>
+        <MudMenuItem Disabled="@(!Ready)" OnClick="Reset" Icon="@Icons.Material.Filled.RestartAlt">Reset</MudMenuItem>
+        <MudMenuItem Disabled="@(!Ready || !Device.Def.CanBootloader)" OnClick="Bootloader" Icon="@Icons.Material.Filled.SystemUpdateAlt">Bootloader</MudMenuItem>
+    </MudMenu>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public domain.Devices.FwDevice Device { get; set; } = null!;
+    [Parameter, EditorRequired] public bool AdapterConnected { get; set; }
+
+    private bool Ready => Device.Connected && AdapterConnected;
+    private bool NeedsRead => DeviceManager.GetDeviceUiState(Device.Guid).NeedsRead && Device.Connected;
+    private string Name => Device.Name;
+
+    private void Run(Action action, string done, string failed)
+    {
+        try
+        {
+            action();
+            Notification.NewInfo(done);
+        }
+        catch (Exception ex)
+        {
+            Notification.NewError(failed, ex);
+        }
+    }
+
+    private void Send(Func<bool> action, string done, string failed)
+    {
+        try
+        {
+            if (action()) Notification.NewSuccess(done);
+            else Notification.NewError(failed);
+        }
+        catch (Exception ex)
+        {
+            Notification.NewError(failed, ex);
+        }
+    }
+
+    private void Read() => Run(() => DeviceManager.ReadDeviceConfig(Device.Guid), $"Reading {Name}", $"Reading {Name} failed");
+    private void ReadAll() => Run(() => DeviceManager.ReadAllDeviceConfig(Device.Guid), $"Reading all of {Name}", $"Reading {Name} failed");
+    private void Write() => Run(() => DeviceManager.WriteDeviceConfig(Device.Guid), $"Writing {Name}", $"Writing {Name} failed");
+    private void WriteAll() => Run(() => DeviceManager.WriteAllDeviceConfig(Device.Guid), $"Writing all of {Name}", $"Writing {Name} failed");
+    private void Burn() => Send(() => DeviceManager.BurnSettings(Device.Guid), $"Burn sent to {Name}", $"Burn to {Name} failed");
+    private void Sleep() => Send(() => DeviceManager.RequestSleep(Device.Guid), $"Sleep sent to {Name}", $"Sleep to {Name} failed");
+    private void Wakeup() => Send(() => DeviceManager.RequestWakeup(Device.Guid), $"Wake up sent to {Name}", $"Wake up to {Name} failed");
+    private void Reset() => Send(() => DeviceManager.ResetDevice(Device.Guid), $"Reset sent to {Name}", $"Reset of {Name} failed");
+    private void Bootloader() => Send(() => DeviceManager.RequestBootloader(Device.Guid), $"Bootloader sent to {Name}", $"Bootloader to {Name} failed");
+}

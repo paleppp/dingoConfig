@@ -1,0 +1,79 @@
+@using web.Components.Devices.FwDevice.Functions
+@implements IDisposable
+
+@* One block's settings, full screen on a phone *@
+<MudDialog Class="m-dialog" ContentClass="m-dialog-content">
+    <DialogContent>
+        @if (_form?.Owner is { } owner)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" Class="mb-3">
+                Set up by @owner. Change it there; changes made here are overwritten from there.
+            </MudAlert>
+        }
+
+        @switch (Section)
+        {
+            case "wiper":
+                <WiperConfig TDevice="domain.Devices.FwDevice" Device="Device" Wiper="Device.Wipers"/>
+                break;
+            case "starter-disable":
+                <StarterDisableConfig TDevice="domain.Devices.FwDevice" Device="Device" StarterDisable="Device.StarterDisable"/>
+                break;
+            default:
+                @if (_form != null)
+                {
+                    <MobileForm Device="Device" Fields="_form.Fields"/>
+                }
+                else
+                {
+                    <MudText Class="muted-text">This block is not on the device.</MudText>
+                }
+                break;
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="Close">Done</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = null!;
+
+    [Parameter, EditorRequired] public domain.Devices.FwDevice Device { get; set; } = null!;
+    [Parameter, EditorRequired] public string Section { get; set; } = "";
+    [Parameter] public int Number { get; set; }
+
+    private BlockForm? _form;
+    private Timer? _refresh;
+
+    protected override void OnInitialized()
+    {
+        _form = MobileBlocks.Form(Device, Section, Number);
+
+        // Live values (state, current) keep moving while the form is open
+        _refresh = new Timer(_ => InvokeAsync(StateHasChanged), null, 250, 250);
+    }
+
+    private void Close() => Dialog.Close();
+
+    public void Dispose() => _refresh?.Dispose();
+
+    /// <summary>Opens a block's settings: section is a cfg-* key, number the block's number</summary>
+    public static async Task OpenAsync(IDialogService dialogs, domain.Devices.FwDevice device, string section, int number)
+    {
+        var title = section switch
+        {
+            "wiper" => "Wiper",
+            "starter-disable" => "Starter disable",
+            _ => MobileBlocks.Form(device, section, number)?.Title ?? "Settings"
+        };
+        var parameters = new DialogParameters<MobileBlockDialog>
+        {
+            { x => x.Device, device },
+            { x => x.Section, section },
+            { x => x.Number, number }
+        };
+        var options = new DialogOptions { FullScreen = true, CloseButton = true };
+        await dialogs.ShowAsync<MobileBlockDialog>(title, parameters, options);
+    }
+}

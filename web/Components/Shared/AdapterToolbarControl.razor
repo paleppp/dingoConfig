@@ -31,7 +31,7 @@
             AnchorOrigin="Origin.BottomRight"
             TransformOrigin="Origin.TopRight"
             OverflowBehavior="OverflowBehavior.FlipAlways">
-    <MudPaper Class="pa-4" Style="min-width: 400px;" Elevation="8">
+    <MudPaper Class="pa-4" Style="min-width: min(400px, calc(100vw - 24px)); max-width: calc(100vw - 24px);" Elevation="8">
         @if (_loading)
         {
             <MudProgressCircular Indeterminate="true" Size="Size.Small" />

@@ -11,12 +11,16 @@
 
 <PageTitle>Device</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="@(Ui?.IsMobile == true ? "pa-0" : "mt-4")">
     @if (_currentDevice != null)
     {
         @* Render BaseDeviceView with appropriate device type *@
         @switch (_currentDevice)
         {
+            case domain.Devices.FwDevice fwDevice when Ui?.IsMobile == true:
+                <web.Components.Mobile.MobileDeviceView Device="fwDevice" AdapterConnected="@AdapterManager.IsConnected"/>
+                break;
+
             case domain.Devices.FwDevice fwDevice:
                 <BaseDeviceView TDevice="domain.Devices.FwDevice"
                                Device="fwDevice"
@@ -62,6 +66,8 @@
 @code {
     [Parameter]
     public Guid DeviceId { get; set; }
+
+    [CascadingParameter] private web.Services.UiMode? Ui { get; set; }
 
     private IDevice? _currentDevice;
     private Timer? _refreshTimer;

@@ -1,0 +1,64 @@
+@using web.Components.Devices.FwDevice
+@using web.Components.Devices.FwDevice.Tabs
+@using web.Components.Devices.FwDevice.Functions
+@inject IDialogService Dialogs
+
+@* A PDM on a phone: what it does now, the vehicle functions, the ignition and the settings *@
+<div class="m-device">
+    <div class="m-device-head">
+        <span class="m-dot @(Device.Connected ? "on" : "")"></span>
+        <div class="m-device-name">
+            <span>@Device.Name</span>
+            <small>@(Device.Connected ? "on the bus" : "not on the bus") · @Device.Def.TypeName</small>
+        </div>
+        <MobileDeviceActions Device="Device" AdapterConnected="AdapterConnected"/>
+    </div>
+
+    <MudTabs @bind-ActivePanelIndex="_tab" Class="m-tabs" PanelClass="m-tab-panel" KeepPanelsAlive="true"
+             MinimumTabWidth="0px" Elevation="0" ApplyEffectsToContainer="false">
+        <MudTabPanel Text="Dashboard">
+            <DashboardTab TDevice="domain.Devices.FwDevice" Device="Device" Compact="true" OnOpen="Open"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Functions">
+            <div class="m-pad">
+                <VehicleFunctionsPanel TDevice="domain.Devices.FwDevice" Device="Device"/>
+            </div>
+        </MudTabPanel>
+        @if (Device.Def.HasIgnition)
+        {
+            <MudTabPanel Text="Ignition">
+                <IgnitionTab TDevice="domain.Devices.FwDevice" Device="Device"/>
+            </MudTabPanel>
+        }
+        <MudTabPanel Text="Settings">
+            <MobileSettings Device="Device"/>
+        </MudTabPanel>
+    </MudTabs>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public domain.Devices.FwDevice Device { get; set; } = null!;
+    [Parameter, EditorRequired] public bool AdapterConnected { get; set; }
+
+    private int _tab;
+
+    private int FunctionsTab => 1;
+    private int IgnitionTabIndex => 2;
+
+    // A dashboard tile: the ignition and vehicle functions have tabs here, other blocks open their form
+    private async Task Open(ConfigTarget target)
+    {
+        switch (target.Section)
+        {
+            case "ignition" when Device.Def.HasIgnition:
+                _tab = IgnitionTabIndex;
+                break;
+            case "vehicle-functions":
+                _tab = FunctionsTab;
+                break;
+            default:
+                await MobileBlockDialog.OpenAsync(Dialogs, Device, target.Section, target.Number);
+                break;
+        }
+    }
+}

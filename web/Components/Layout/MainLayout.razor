@@ -2,7 +2,9 @@
 @using domain.Interfaces
 @using MudBlazor.Utilities
 @inherits LayoutComponentBase
+@using web.Components.Mobile
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 @implements IDisposable
 
 @* Required *@
@@ -15,6 +17,14 @@
 @* Needed for snackbars *@
 <MudSnackbarProvider />
 
+@if (Ui?.IsMobile == true)
+{
+    <MobileShell OnNew="HandleNew" OnOpen="HandleOpen" OnSave="HandleSave" OnSaveAs="HandleSaveAs" OnHelp="HandleShowHelp">
+        @Body
+    </MobileShell>
+}
+else
+{
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu"
@@ -33,6 +43,11 @@
             <SimPlaybackToolbar />
         }
         <AdapterToolbarControl />
+        <MudTooltip Text="Phone view">
+            <MudIconButton Icon="@Icons.Material.Outlined.PhoneAndroid"
+                           Color="Color.Inherit"
+                           OnClick="PhoneView" />
+        </MudTooltip>
         <MudIconButton Icon="@Icons.Material.Filled.Help"
                        Color="Color.Inherit"
                        OnClick="HandleShowHelp" />
@@ -46,6 +61,7 @@
         @Body
     </MudMainContent>
 </MudLayout>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -60,6 +76,8 @@
     [Inject] private ICommsAdapterManager AdapterManager { get; set; } = null!;
     [Inject] private NavigationManager Nav { get; set; } = null!;
     [Inject] private ProjectService Projects { get; set; } = null!;
+
+    [CascadingParameter] private web.Services.UiMode? Ui { get; set; }
 
     private string _locationUri = "";
     
@@ -102,6 +120,12 @@
     private void NavOnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         _locationUri = Nav.Uri;
+    }
+
+    private async Task PhoneView()
+    {
+        await using var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/ui-mode.js");
+        await module.InvokeVoidAsync("setView", "mobile");
     }
 
     private void ToggleDrawer()
