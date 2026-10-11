@@ -5,9 +5,14 @@
 @inject IJSRuntime JS
 @implements IDisposable
 
-@* The phone layout: a slim bar on top, the page, and the main places at the bottom within thumb reach *@
+@* The phone layout: a slim bar on top, the page, the main places at the bottom within thumb reach,
+   and everything else in a menu that slides in from the left *@
 <div class="m-shell">
     <header class="m-top">
+        <button type="button" class="m-menu-btn" aria-label="Menu" aria-expanded="@(_menuOpen ? "true" : "false")"
+                @onclick="OpenMenu">
+            <MudIcon Icon="@Icons.Material.Filled.Menu"/>
+        </button>
         <span class="m-brand">dingoConfig</span>
         <span class="m-file">@FileManager.CurrentFileName</span>
         <span class="m-grow"></span>
@@ -27,39 +32,45 @@
             <MudIcon Icon="@Icons.Material.Outlined.Memory"/>
             <span>Devices</span>
         </a>
-        <button type="button" class="@(_sheet == "project" ? "active" : "")" @onclick="@(() => _sheet = "project")">
-            <MudIcon Icon="@Icons.Material.Outlined.FolderOpen"/>
-            <span>Project</span>
-        </button>
-        <button type="button" class="@(_sheet == "more" ? "active" : "")" @onclick="@(() => _sheet = "more")">
+        <button type="button" class="@(_menuOpen ? "active" : "")" @onclick="OpenMenu">
             <MudIcon Icon="@Icons.Material.Outlined.Menu"/>
-            <span>More</span>
+            <span>Menu</span>
         </button>
     </nav>
 </div>
 
-<MudDrawer Open="@(_sheet == "project")" OpenChanged="@(open => { if (!open) _sheet = null; })"
-           Anchor="Anchor.Bottom" Variant="@DrawerVariant.Temporary" Elevation="8" Class="m-sheet">
-    <div class="m-sheet-body">
-        <div class="m-sheet-title">Project</div>
-        <div class="m-sheet-tools">
-            <FileToolbar OnNew="OnNew" OnOpen="OnOpen" OnSave="OnSave" OnSaveAs="OnSaveAs"/>
-        </div>
-        <p class="m-sheet-hint">New, open, save and save as. Recent projects are on the home page.</p>
+@* Plain markup rather than MudDrawer: that one needs the MudLayout the desktop layout has and this one doesn't *@
+<div class="m-scrim @(_menuOpen ? "open" : "")" @onclick="CloseMenu"></div>
+<aside class="m-side @(_menuOpen ? "open" : "")" aria-label="Menu" inert="@(!_menuOpen)">
+    <div class="m-side-head">
+        <span class="m-brand">dingoConfig</span>
+        <button type="button" class="m-menu-btn" aria-label="Close menu" @onclick="CloseMenu">
+            <MudIcon Icon="@Icons.Material.Filled.Close"/>
+        </button>
     </div>
-</MudDrawer>
 
-<MudDrawer Open="@(_sheet == "more")" OpenChanged="@(open => { if (!open) _sheet = null; })"
-           Anchor="Anchor.Bottom" Variant="@DrawerVariant.Temporary" Elevation="8" Class="m-sheet">
-    <div class="m-sheet-body">
-        <div class="m-sheet-title">More</div>
-        <a class="m-sheet-link" href="can-log" @onclick="Close"><MudIcon Icon="@Icons.Material.Outlined.Article"/>CAN log</a>
-        <a class="m-sheet-link" href="system-log" @onclick="Close"><MudIcon Icon="@Icons.Material.Outlined.Notes"/>Messages</a>
-        <a class="m-sheet-link" href="plot" @onclick="Close"><MudIcon Icon="@Icons.Material.Outlined.StackedLineChart"/>Plot</a>
-        <button type="button" class="m-sheet-link" @onclick="Help"><MudIcon Icon="@Icons.Material.Outlined.HelpOutline"/>Help</button>
-        <button type="button" class="m-sheet-link" @onclick="DesktopView"><MudIcon Icon="@Icons.Material.Outlined.DesktopWindows"/>Desktop view</button>
+    <div class="m-side-group">
+        <div class="m-side-title">Project</div>
+        <div class="m-side-file">@(FileManager.CurrentFileName is { Length: > 0 } name ? name : "No file open")</div>
+        @* A project action opens its own dialog, so the menu steps aside as soon as one is picked *@
+        <div class="m-side-actions" @onclick="CloseMenu">
+            <FileToolbar List="true" OnNew="OnNew" OnOpen="OnOpen" OnSave="OnSave" OnSaveAs="OnSaveAs"/>
+        </div>
     </div>
-</MudDrawer>
+
+    <div class="m-side-group">
+        <a class="m-side-link @Current("")" href=""><MudIcon Icon="@Icons.Material.Outlined.Home"/>Home</a>
+        <a class="m-side-link @Current("device")" href="devices"><MudIcon Icon="@Icons.Material.Outlined.Memory"/>Devices</a>
+        <a class="m-side-link @Current("plot")" href="plot"><MudIcon Icon="@Icons.Material.Outlined.StackedLineChart"/>Plot</a>
+        <a class="m-side-link @Current("can-log")" href="can-log"><MudIcon Icon="@Icons.Material.Outlined.Article"/>CAN log</a>
+        <a class="m-side-link @Current("system-log")" href="system-log"><MudIcon Icon="@Icons.Material.Outlined.Notes"/>Messages</a>
+    </div>
+
+    <div class="m-side-group">
+        <button type="button" class="m-side-link" @onclick="Help"><MudIcon Icon="@Icons.Material.Outlined.HelpOutline"/>Help</button>
+        <button type="button" class="m-side-link" @onclick="DesktopView"><MudIcon Icon="@Icons.Material.Outlined.DesktopWindows"/>Desktop view</button>
+    </div>
+</aside>
 
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -69,16 +80,22 @@
     [Parameter] public EventCallback<string> OnSaveAs { get; set; }
     [Parameter] public EventCallback OnHelp { get; set; }
 
-    private string? _sheet;
+    private bool _menuOpen;
 
-    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        FileManager.OnStateChanged += OnFileChanged;
+    }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
         InvokeAsync(() =>
         {
-            _sheet = null;
+            _menuOpen = false;
             StateHasChanged();
         });
+
+    private void OnFileChanged() => InvokeAsync(StateHasChanged);
 
     // "" is the home page; other prefixes match their pages and those under them
     private string Current(string prefix)
@@ -88,11 +105,13 @@
         return active ? "active" : "";
     }
 
-    private void Close() => _sheet = null;
+    private void OpenMenu() => _menuOpen = true;
+
+    private void CloseMenu() => _menuOpen = false;
 
     private async Task Help()
     {
-        _sheet = null;
+        _menuOpen = false;
         await OnHelp.InvokeAsync();
     }
 
@@ -102,5 +121,9 @@
         await module.InvokeVoidAsync("setView", "desktop");
     }
 
-    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        FileManager.OnStateChanged -= OnFileChanged;
+    }
 }

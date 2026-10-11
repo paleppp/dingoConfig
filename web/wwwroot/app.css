@@ -586,6 +586,9 @@ tr.cfg-jump > td:first-child {
     display: flex;
     flex-direction: column;
     background: var(--mud-palette-background);
+    /* Whatever a shared page lets overflow stays inside it: a phone widens its whole
+       layout to fit the widest element, and then everything is drawn zoomed out */
+    overflow-x: clip;
 }
 
 .m-top {
@@ -637,7 +640,7 @@ tr.cfg-jump > td:first-child {
     bottom: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: var(--mud-palette-appbar-background);
     border-top: 1px solid var(--mud-palette-lines-default);
@@ -664,56 +667,152 @@ tr.cfg-jump > td:first-child {
     color: var(--mud-palette-primary);
 }
 
-.m-nav a:focus-visible, .m-nav button:focus-visible, .m-row:focus-visible, .m-sheet-link:focus-visible,
-.m-form-pick:focus-visible, .m-more:focus-visible {
+.m-nav a:focus-visible, .m-nav button:focus-visible, .m-row:focus-visible, .m-side-link:focus-visible,
+.m-menu-btn:focus-visible, .m-form-pick:focus-visible, .m-more:focus-visible {
     outline: 2px solid var(--mud-palette-primary);
     outline-offset: -2px;
 }
 
-.m-sheet.mud-drawer {
-    height: auto !important;
-    max-height: 85dvh;
-    border-radius: 14px 14px 0 0;
+/* The menu that slides in from the left. Under MudBlazor's popovers (1200) and dialogs (1400),
+   so the project dialogs it opens come up on top of it. */
+.m-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    margin-left: -6px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--mud-palette-text-primary);
+    cursor: pointer;
 }
 
-.m-sheet-body {
-    display: grid;
-    gap: 6px;
-    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+.m-menu-btn:active {
+    background: color-mix(in srgb, var(--mud-palette-text-primary) 10%, transparent);
 }
 
-.m-sheet-title {
-    font-size: 1rem;
-    font-weight: 600;
+.m-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1140;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
 }
 
-.m-sheet-file, .m-sheet-hint {
-    margin: 0;
-    font-size: 0.8rem;
+.m-scrim.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.m-side {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1150;
+    display: flex;
+    flex-direction: column;
+    width: min(300px, 85vw);
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--mud-palette-drawer-background, var(--mud-palette-surface));
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35);
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+}
+
+.m-side.open {
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .m-side, .m-scrim {
+        transition: none;
+    }
+}
+
+.m-side-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    padding: 6px 8px 6px 16px;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-side-head .m-menu-btn {
+    margin-left: 0;
+}
+
+.m-side-group {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.m-side-group:last-child {
+    border-bottom: 0;
+}
+
+.m-side-title {
+    padding: 4px 16px 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--mud-palette-text-secondary);
 }
 
-.m-sheet-tools {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
+.m-side-file {
+    padding: 2px 16px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
 }
 
-.m-sheet-link {
+.m-side-link {
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: flex-start;
+    gap: 16px;
+    width: 100%;
     min-height: 48px;
-    padding: 10px 4px;
+    padding: 10px 16px;
     border: 0;
-    border-bottom: 1px solid var(--mud-palette-lines-default);
     background: none;
     color: var(--mud-palette-text-primary);
     font: inherit;
     text-align: left;
     text-decoration: none;
     cursor: pointer;
+}
+
+.m-side-link .mud-icon-root {
+    color: var(--mud-palette-text-secondary);
+}
+
+.m-side-link.active, .m-side-link.active .mud-icon-root {
+    color: var(--mud-palette-primary);
+}
+
+.m-side-link.active {
+    background: color-mix(in srgb, var(--mud-palette-primary) 10%, transparent);
+}
+
+.m-side-link:active {
+    background: color-mix(in srgb, var(--mud-palette-text-primary) 8%, transparent);
+}
+
+.m-side-link:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 /* Device page */
@@ -990,11 +1089,6 @@ tr.cfg-jump > td:first-child {
 }
 
 /* Phone layout: what the shared pages need on a narrow screen */
-.m-sheet-link {
-    justify-content: flex-start;
-    width: 100%;
-}
-
 .m-tabs .mud-tabs-tabbar-wrapper {
     width: 100%;
 }

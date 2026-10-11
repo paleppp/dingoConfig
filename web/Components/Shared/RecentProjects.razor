@@ -24,6 +24,8 @@
     .recent-project-main { flex: 1 1 auto; min-width: 0; }
     .recent-project-title { display: flex; align-items: center; gap: 8px; }
     .recent-project-path {
+        /* A block, or the ellipsis never applies and a long path widens the page */
+        display: block;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

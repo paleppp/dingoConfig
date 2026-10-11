@@ -5,6 +5,19 @@
 @inject IDialogService DialogService
 @implements IDisposable
 
+@if (List)
+{
+    @* The phone's menu: the same actions as rows with their names *@
+    <button type="button" class="m-side-link" @onclick="HandleNew"><MudIcon Icon="@Icons.Material.Outlined.Add"/>New</button>
+    <button type="button" class="m-side-link" @onclick="HandleOpen"><MudIcon Icon="@Icons.Material.Outlined.FolderOpen"/>Open</button>
+    <button type="button" class="m-side-link" @onclick="HandleSave" disabled="@string.IsNullOrEmpty(FileManager.CurrentFileName)">
+        <MudIcon Icon="@Icons.Material.Outlined.Save"/>Save
+    </button>
+    <button type="button" class="m-side-link" @onclick="HandleSaveAs"><MudIcon Icon="@Icons.Material.Outlined.SaveAs"/>Save as</button>
+    <button type="button" class="m-side-link" @onclick="HandleSettings"><MudIcon Icon="@Icons.Material.Outlined.Settings"/>Project folder</button>
+}
+else
+{
 <MudToolBar Dense="true" Class="mb-3">
     <MudTooltip Text="New">
         <MudIconButton Icon="@Icons.Material.Outlined.Add"
@@ -45,8 +58,13 @@
         @GetStatusText()
     </MudText>
 </MudToolBar>
+}
 
 @code {
+    /// <summary>Rows with names instead of a bar of icons, for the phone's menu.</summary>
+    [Parameter]
+    public bool List { get; set; }
+
     [Parameter]
     public EventCallback OnNew { get; set; }
 
