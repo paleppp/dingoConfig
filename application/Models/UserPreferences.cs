@@ -11,7 +11,9 @@ public class UserPreferences
     public string? SelectedAdapter { get; set; }
     public string? SelectedPort { get; set; }
     public string WifiAddress { get; set; } = "192.168.4.1";
-    public CanBitRate SelectedBitrate { get; set; }
+    public string? WifiBridge { get; set; }
+    public bool WifiManualAddress { get; set; }
+    public CanBitRate SelectedBitrate { get; set; } = CanBitRate.BitRate500K; // dingoPDM's own default
     public NumberFormat IdFormat { get; set; }
 
     /// <summary>Most recently used first.</summary>
