@@ -509,33 +509,39 @@ public class DeviceManager(ILogger<DeviceManager> logger, ILoggerFactory loggerF
     }
 
     /// <summary>
-    /// Modify device, name and base ID
-    /// Sends modify message to device
+    /// Modify device, name and base ID.
+    /// A connected device is sent its new base ID too; one that isn't answering is only changed in
+    /// the project, since nothing can reach it at its old ID (usually it was added with the wrong one).
     /// </summary>
-    public void ModifyDeviceConfig(Guid deviceId, string newName, int newBaseId)
+    /// <returns>True if the new base ID was sent to the device</returns>
+    public bool ModifyDeviceConfig(Guid deviceId, string newName, int newBaseId)
     {
         var device = GetDevice(deviceId);
-        if (device is not IDeviceConfigurable configurable)
-        {
-            if (device == null) return;
-            
-            device.Name = newName;
-            device.BaseId = newBaseId;
-            return;
-        }
-
-        QueueMessage(configurable.GetModifyMsg(newBaseId));
-
-        logger.LogInformation("Modify started for {DeviceName} (Guid: {Guid})", device.Name, deviceId);
-
-        //Wait for modify messages to be sent, then update the base ID
-        Thread.Sleep(300);
+        if (device == null) return false;
 
         var oldBaseId = device.BaseId;
+        var sent = false;
+
+        if (newBaseId != oldBaseId && device is IDeviceConfigurable configurable && device.Connected)
+        {
+            QueueMessage(configurable.GetModifyMsg(newBaseId));
+            logger.LogInformation("Modify started for {DeviceName} (Guid: {Guid})", device.Name, deviceId);
+
+            //Wait for modify messages to be sent, then update the base ID
+            Thread.Sleep(300);
+            sent = true;
+        }
+        else if (newBaseId != oldBaseId)
+        {
+            logger.LogInformation("{DeviceName} is not connected: base ID changed in the project only", device.Name);
+        }
+
         device.Name = newName;
         device.BaseId = newBaseId;
-        if (device is FwDevice fw)
+        if (device is FwDevice fw && newBaseId != oldBaseId)
             VehicleFunctionService.BaseIdChanged(fw, oldBaseId);
+
+        return sent;
     }
 
     /// <summary>

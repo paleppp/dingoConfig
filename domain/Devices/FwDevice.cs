@@ -32,7 +32,9 @@ public class FwDevice : IDeviceConfigurable
     [JsonIgnore] public const int ConfigRxOffset = 0;
     [JsonIgnore] public const int ConfigTxOffset = 1;
     [JsonIgnore] public const int CyclicRxOffset = 2;
-    [JsonIgnore] public int MaxCyclicId { get; private set; }
+    // Kept as an offset so the range follows BaseId when Modify changes it
+    [JsonIgnore] private int _maxCyclicOffset;
+    [JsonIgnore] public int MaxCyclicId => BaseId + _maxCyclicOffset;
 
     [JsonIgnore] public List<DeviceVariable> VarMap { get; set; } = null!;
     [JsonIgnore] public List<DeviceParameter> Params { get; set; } = null!;
@@ -243,8 +245,8 @@ public class FwDevice : IDeviceConfigurable
                 }
             }
 
-            if ((msgDef.IdOffset + BaseId ) > MaxCyclicId)
-                MaxCyclicId = msgDef.IdOffset + BaseId;
+            if (msgDef.IdOffset > _maxCyclicOffset)
+                _maxCyclicOffset = msgDef.IdOffset;
         }
     }
 

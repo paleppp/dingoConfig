@@ -333,11 +333,25 @@
             }
 
             var ids = Utils.ParseId(_modifyDeviceBaseIdString, UserPrefs.Preferences.IdFormat, Notification);
+            var oldId = _modifyDevice.BaseId;
 
-            DeviceManager.ModifyDeviceConfig(_modifyDevice.Guid, _modifyDeviceName, ids);
+            var sent = DeviceManager.ModifyDeviceConfig(_modifyDevice.Guid, _modifyDeviceName, ids);
 
-            Notification.NewSuccess($"Device '{_modifyDeviceName}' modify successfully sent.");
-            Notification.NewWarning("Remember to Burn after modifying device base ID to store new ID on device");
+            if (sent)
+            {
+                Notification.NewSuccess($"Device '{_modifyDeviceName}' modify successfully sent.");
+                Notification.NewWarning("Remember to Burn after modifying device base ID to store new ID on device");
+            }
+            else if (ids != oldId)
+            {
+                // Nothing answered at the old ID, so only the project changed
+                Notification.NewSuccess($"'{_modifyDeviceName}' now uses base ID {Utils.FormatId(ids, UserPrefs.Preferences.IdFormat)} in the project. " +
+                                        "The device was not connected, so nothing was sent to it.");
+            }
+            else
+            {
+                Notification.NewSuccess($"Device '{_modifyDeviceName}' modified");
+            }
             _showModifyForm = false;
             
         }
