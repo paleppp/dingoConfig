@@ -77,6 +77,7 @@
                                                    OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.ParkInput = v))">
                                     </MudIconButton>
                                     <MudText>@GetSelectedVarText(Wiper.ParkInput)</MudText>
+                                    <VarClear Value="Wiper.ParkInput" OnClear="@(() => Wiper.ParkInput = 0)" Disabled="(!Wiper.Enabled)" />
                                 </MudStack>
                             </MudCardContent>
                         </MudCard>
@@ -104,6 +105,7 @@
                                                        OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.SlowInput = v))">
                                         </MudIconButton>
                                         <MudText>@GetSelectedVarText(Wiper.SlowInput)</MudText>
+                                        <VarClear Value="Wiper.SlowInput" OnClear="@(() => Wiper.SlowInput = 0)" Disabled="(!Wiper.Enabled || _slowInputDisabled)" />
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -121,6 +123,7 @@
                                                        OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.FastInput = v))">
                                         </MudIconButton>
                                         <MudText>@GetSelectedVarText(Wiper.FastInput)</MudText>
+                                        <VarClear Value="Wiper.FastInput" OnClear="@(() => Wiper.FastInput = 0)" Disabled="(!Wiper.Enabled || _fastInputDisabled)" />
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -138,6 +141,7 @@
                                                        OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.InterInput = v))">
                                         </MudIconButton>
                                         <MudText>@GetSelectedVarText(Wiper.InterInput)</MudText>
+                                        <VarClear Value="Wiper.InterInput" OnClear="@(() => Wiper.InterInput = 0)" Disabled="(!Wiper.Enabled || _interInputDisabled)" />
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -155,6 +159,7 @@
                                                        OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.OnInput = v))">
                                         </MudIconButton>
                                         <MudText>@GetSelectedVarText(Wiper.OnInput)</MudText>
+                                        <VarClear Value="Wiper.OnInput" OnClear="@(() => Wiper.OnInput = 0)" Disabled="(!Wiper.Enabled || _onInputDisabled)" />
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -172,6 +177,7 @@
                                                        OnClick="@(() => OpenVariableSelectorAsync(["int"], v => Wiper.SpeedInput = v))">
                                         </MudIconButton>
                                         <MudText>@GetSelectedVarText(Wiper.SpeedInput)</MudText>
+                                        <VarClear Value="Wiper.SpeedInput" OnClear="@(() => Wiper.SpeedInput = 0)" Disabled="(!Wiper.Enabled || _speedInputDisabled)" />
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -201,6 +207,7 @@
                                                            OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.SwipeInput = v))">
                                             </MudIconButton>
                                             <MudText>@GetSelectedVarText(Wiper.SwipeInput)</MudText>
+                                            <VarClear Value="Wiper.SwipeInput" OnClear="@(() => Wiper.SwipeInput = 0)" Disabled="(!Wiper.Enabled)" />
                                         </MudStack>
                                     </MudCardContent>
                                 </MudCard>
@@ -218,6 +225,7 @@
                                                            OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Wiper.WashInput = v))">
                                             </MudIconButton>
                                             <MudText>@GetSelectedVarText(Wiper.WashInput)</MudText>
+                                            <VarClear Value="Wiper.WashInput" OnClear="@(() => Wiper.WashInput = 0)" Disabled="(!Wiper.Enabled)" />
                                         </MudStack>
                                     </MudCardContent>
                                 </MudCard>

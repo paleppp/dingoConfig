@@ -1,0 +1,18 @@
+@* Sets a variable picker back to None (variable 0). Shown only while something is picked. *@
+@if (Value != 0)
+{
+    <MudTooltip Text="Clear">
+        <MudIconButton Icon="@Icons.Material.Outlined.Close"
+                       Size="Size.Small"
+                       Style="max-width: 20px"
+                       Disabled="Disabled"
+                       aria-label="Clear the variable"
+                       OnClick="OnClear"/>
+    </MudTooltip>
+}
+
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+}

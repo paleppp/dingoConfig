@@ -39,6 +39,7 @@
                                            OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Keypad.DimmingVar = v))">
                             </MudIconButton>
                             <MudText>@GetSelectedVarText(Keypad.DimmingVar)</MudText>
+                            <VarClear Value="Keypad.DimmingVar" OnClear="@(() => Keypad.DimmingVar = 0)" Disabled="(!Keypad.Enabled)" />
 
                         </MudStack>
                     </MudStack>

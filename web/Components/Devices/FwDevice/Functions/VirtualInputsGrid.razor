@@ -61,6 +61,7 @@
                                    OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => context.Item.Var0 = v))">
                     </MudIconButton>
                     <MudText>@GetSelectedVarText(context.Item.Var0)</MudText>
+                    <VarClear Value="context.Item.Var0" OnClear="@(() => context.Item.Var0 = 0)" Disabled="(!context.Item.Enabled)" />
                 </MudStack>
             </EditTemplate>
         </PropertyColumn>
@@ -91,6 +92,7 @@
                                    OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => context.Item.Var1 = v))">
                     </MudIconButton>
                     <MudText>@GetSelectedVarText(context.Item.Var1)</MudText>
+                    <VarClear Value="context.Item.Var1" OnClear="@(() => context.Item.Var1 = 0)" Disabled="(!context.Item.Enabled)" />
                 </MudStack>
             </EditTemplate>
         </PropertyColumn>
@@ -121,6 +123,7 @@
                                    OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => context.Item.Var2 = v))">
                     </MudIconButton>
                     <MudText>@GetSelectedVarText(context.Item.Var2)</MudText>
+                    <VarClear Value="context.Item.Var2" OnClear="@(() => context.Item.Var2 = 0)" Disabled="(!context.Item.Enabled)" />
                 </MudStack>
             </EditTemplate>
         </PropertyColumn>

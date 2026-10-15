@@ -63,6 +63,7 @@
                                                    OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Device.MuteCanTxInput = v))">
                                     </MudIconButton>
                                     <MudText>@GetSelectedVarText(Device.MuteCanTxInput)</MudText>
+                                    <VarClear Value="Device.MuteCanTxInput" OnClear="@(() => Device.MuteCanTxInput = 0)" />
                                 </MudStack>
                             </MudPaper>
                         </MudCardContent>
@@ -93,6 +94,7 @@
                                                        OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => Device.ForceSleepInput = v))">
                                         </MudIconButton>
                                         <MudText>@GetSelectedVarText(Device.ForceSleepInput)</MudText>
+                                        <VarClear Value="Device.ForceSleepInput" OnClear="@(() => Device.ForceSleepInput = 0)" />
                                     </MudStack>
                                 </MudPaper>
                             </MudCardContent>

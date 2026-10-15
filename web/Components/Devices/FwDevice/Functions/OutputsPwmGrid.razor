@@ -65,6 +65,7 @@
                                    OnClick="@(() => OpenVariableSelectorAsync(["int","float"], v => context.Item.DutyCycleInput = v))">
                     </MudIconButton>
                     <MudText>@GetSelectedVarText(context.Item.DutyCycleInput)</MudText>
+                    <VarClear Value="context.Item.DutyCycleInput" OnClear="@(() => context.Item.DutyCycleInput = 0)" Disabled="(!context.Item.PwmEnabled) || context.Item.PrimaryOutput >= 0 || !context.Item.VariableDutyCycle" />
                 </MudStack>
             </EditTemplate>
         </PropertyColumn>

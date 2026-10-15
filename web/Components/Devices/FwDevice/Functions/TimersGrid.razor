@@ -45,6 +45,7 @@
                                    OnClick="@(() => OpenVariableSelectorAsync(["bool", "int", "float"], v => context.Item.Input = v))">
                     </MudIconButton>
                     <MudText>@GetSelectedVarText(context.Item.Input)</MudText>
+                    <VarClear Value="context.Item.Input" OnClear="@(() => context.Item.Input = 0)" Disabled="(!context.Item.Enabled)" />
                 </MudStack>
             </EditTemplate>
         </PropertyColumn>
@@ -59,6 +60,7 @@
                                    OnClick="@(() => OpenVariableSelectorAsync(["bool", "int", "float"], v => context.Item.ResetInput = v))">
                     </MudIconButton>
                     <MudText>@GetSelectedVarText(context.Item.ResetInput)</MudText>
+                    <VarClear Value="context.Item.ResetInput" OnClear="@(() => context.Item.ResetInput = 0)" Disabled="(!context.Item.Enabled)" />
                 </MudStack>
             </EditTemplate>
         </PropertyColumn>

@@ -31,6 +31,7 @@
                                                    OnClick="@(() => OpenVariableSelectorAsync(["bool"], v => StarterDisable.Input = v))">
                                     </MudIconButton>
                                     <MudText>@GetSelectedVarText(StarterDisable.Input)</MudText>
+                                    <VarClear Value="StarterDisable.Input" OnClear="@(() => StarterDisable.Input = 0)" Disabled="(!StarterDisable.Enabled)" />
                                 </MudStack>
                             </MudCardContent>
                         </MudCard>
