@@ -659,7 +659,18 @@ public class DeviceManager(ILogger<DeviceManager> logger, ILoggerFactory loggerF
         logger.LogInformation("Enter bootloader on {DeviceName} (Guid: {Guid})", device.Name, deviceId);
         return true;
     }
-    
+
+    /// <summary>Sends a dingoFW device into its OpenBLT bootloader for a firmware update over CAN.</summary>
+    public bool RequestCanUpdate(Guid deviceId)
+    {
+        if (GetDevice(deviceId) is not FwDevice device)
+            return false;
+
+        QueueMessage(device.GetCanUpdateMsg());
+        logger.LogInformation("Enter CAN update bootloader on {DeviceName} (Guid: {Guid})", device.Name, deviceId);
+        return true;
+    }
+
     /// <summary>
     /// Reset device
     /// </summary>

@@ -872,7 +872,15 @@ public class FwDevice : IDeviceConfigurable
         };
     }
 
-    public DeviceCanFrame GetBootloaderMsg()
+    public DeviceCanFrame GetBootloaderMsg() => BootloaderMsg(canUpdate: false);
+
+    /// <summary>
+    /// Into the OpenBLT CAN bootloader for a firmware update over CAN (byte 6 = 1). Byte 6 = 0 is
+    /// the USB-DFU bootloader on the boards that have one.
+    /// </summary>
+    public DeviceCanFrame GetCanUpdateMsg() => BootloaderMsg(canUpdate: true);
+
+    private DeviceCanFrame BootloaderMsg(bool canUpdate)
     {
         return new DeviceCanFrame
         {
@@ -883,11 +891,11 @@ public class FwDevice : IDeviceConfigurable
                 Id: BaseId + ConfigTxOffset,
                 Len: 8,
                 Payload: [
-                    Convert.ToByte(MessageCommand.Bootloader), (byte)'B', (byte)'O', (byte)'O', (byte)'T', (byte)'L', 0,
-                    0
+                    Convert.ToByte(MessageCommand.Bootloader), (byte)'B', (byte)'O', (byte)'O', (byte)'T', (byte)'L',
+                    (byte)(canUpdate ? 1 : 0), 0
                 ]
             ),
-            Name = "Bootloader"
+            Name = canUpdate ? "Bootloader (CAN update)" : "Bootloader"
         };
     }
     

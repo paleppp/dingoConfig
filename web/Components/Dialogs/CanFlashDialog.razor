@@ -1,0 +1,142 @@
+@using application.Services
+@using domain.Firmware
+@using Microsoft.AspNetCore.Components.Forms
+@inject CanFlashService Flash
+@implements IDisposable
+
+@* Firmware update over CAN, through the module's OpenBLT bootloader *@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.SystemUpdateAlt" Class="mr-2"/>
+            Update firmware over CAN
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.body2">
+                @Device.Name (@Device.Def.TypeName, base ID 0x@(Device.BaseId.ToString("X3"))), running @Device.Version.
+                The update goes through the OpenBLT bootloader, which has to be on the module once, flashed over
+                SWD or USB. Keep the module and the adapter powered until it is done.
+            </MudText>
+
+            <MudFileUpload T="IBrowserFile" FilesChanged="LoadAsync" Accept=".srec,.s19,.mot" Disabled="@_busy">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@_busy"
+                               StartIcon="@Icons.Material.Filled.UploadFile">
+                        Choose firmware (.srec)
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+
+            @if (_fileName != null)
+            {
+                <MudPaper Outlined="true" Class="pa-3">
+                    <MudText Typo="Typo.subtitle2">@_fileName</MudText>
+                    @if (_image != null)
+                    {
+                        <MudText Typo="Typo.body2">
+                            @(_image.BoardMarker() ?? "No board marker")@(_image.VersionMarker() is { } v ? $", firmware {v}" : ""),
+                            @(_image.TotalBytes / 1024) KB from 0x@(_image.MinAddress.ToString("X8"))
+                        </MudText>
+                    }
+                </MudPaper>
+            }
+
+            @if (_problem != null)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">@_problem</MudAlert>
+            }
+            else if (_image != null && _image.BoardMarker() == null)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    This image does not say which board it is for. Check it is a @Device.Def.TypeName build.
+                </MudAlert>
+            }
+
+            @if (_busy || _result != null)
+            {
+                <div>
+                    <MudText Typo="Typo.caption">@Flash.Status.Phase</MudText>
+                    <MudProgressLinear Color="@(_result is { Ok: false } ? Color.Error : Color.Primary)"
+                                       Value="@Flash.Status.Percent" Rounded="true" Size="Size.Medium"/>
+                </div>
+            }
+
+            @if (_result != null)
+            {
+                <MudAlert Severity="@(_result.Ok ? Severity.Success : Severity.Error)" Dense="true">
+                    <pre style="margin: 0; white-space: pre-wrap; font: inherit;">@_result.Log</pre>
+                </MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Disabled="@_busy">Close</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UpdateAsync"
+                   Disabled="@(_busy || _image == null || _problem != null)">
+            Update
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter, EditorRequired] public domain.Devices.FwDevice Device { get; set; } = null!;
+
+    // The largest app is 368 KB; as S-record text that is under 1.2 MB
+    private const long MaxFileBytes = 2 * 1024 * 1024;
+
+    private string? _fileName;
+    private SRecordImage? _image;
+    private string? _problem;
+    private bool _busy;
+    private CanFlashService.FlashResult? _result;
+
+    protected override void OnInitialized() => Flash.StatusChanged += OnStatus;
+
+    private void OnStatus() => InvokeAsync(StateHasChanged);
+
+    private async Task LoadAsync(IBrowserFile? file)
+    {
+        _image = null;
+        _problem = null;
+        _result = null;
+        if (file == null) return;
+
+        _fileName = file.Name;
+        try
+        {
+            if (file.Size > MaxFileBytes)
+                throw new InvalidDataException($"The file is {file.Size / 1024} KB, too big for a firmware image.");
+            using var reader = new StreamReader(file.OpenReadStream(MaxFileBytes));
+            _image = SRecordImage.ParseText(await reader.ReadToEndAsync());
+            _problem = CanFlashService.Refusal(Device, _image);
+        }
+        catch (Exception ex)
+        {
+            _image = null;
+            _problem = $"Not a firmware image: {ex.Message}";
+        }
+    }
+
+    private async Task UpdateAsync()
+    {
+        if (_image == null) return;
+        _busy = true;
+        _result = null;
+        StateHasChanged();
+        try
+        {
+            _result = await Flash.FlashAsync(Device.Guid, _image);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Close() => MudDialog.Close(DialogResult.Ok(_result?.Ok ?? false));
+
+    public void Dispose() => Flash.StatusChanged -= OnStatus;
+}

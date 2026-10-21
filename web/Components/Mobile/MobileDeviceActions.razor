@@ -2,6 +2,7 @@
 @using web.Services
 @inject DeviceManager DeviceManager
 @inject NotificationService Notification
+@inject IDialogService DialogService
 
 @* Read and Write in reach, the rest of the device commands behind the menu *@
 <div class="m-actions">
@@ -23,7 +24,8 @@
         <MudMenuItem Disabled="@(!Ready || !Device.Def.CanSleep)" OnClick="Sleep" Icon="@Icons.Material.Filled.Bedtime">Sleep</MudMenuItem>
         <MudMenuItem Disabled="@(!Ready || !Device.Def.CanSleep)" OnClick="Wakeup" Icon="@Icons.Material.Filled.WbSunny">Wake up</MudMenuItem>
         <MudMenuItem Disabled="@(!Ready)" OnClick="Reset" Icon="@Icons.Material.Filled.RestartAlt">Reset</MudMenuItem>
-        <MudMenuItem Disabled="@(!Ready || !Device.Def.CanBootloader)" OnClick="Bootloader" Icon="@Icons.Material.Filled.SystemUpdateAlt">Bootloader</MudMenuItem>
+        <MudMenuItem Disabled="@(!Ready || !Device.Def.CanBootloader)" OnClick="Bootloader" Icon="@Icons.Material.Filled.DeveloperMode">Bootloader</MudMenuItem>
+        <MudMenuItem Disabled="@(!AdapterConnected || !Device.Def.CanBootloader)" OnClick="UpdateFirmwareAsync" Icon="@Icons.Material.Filled.SystemUpdateAlt">Update firmware</MudMenuItem>
     </MudMenu>
 </div>
 
@@ -70,4 +72,11 @@
     private void Wakeup() => Send(() => DeviceManager.RequestWakeup(Device.Guid), $"Wake up sent to {Name}", $"Wake up to {Name} failed");
     private void Reset() => Send(() => DeviceManager.ResetDevice(Device.Guid), $"Reset sent to {Name}", $"Reset of {Name} failed");
     private void Bootloader() => Send(() => DeviceManager.RequestBootloader(Device.Guid), $"Bootloader sent to {Name}", $"Bootloader to {Name} failed");
+
+    private async Task UpdateFirmwareAsync()
+    {
+        var parameters = new DialogParameters<web.Components.Dialogs.CanFlashDialog> { { x => x.Device, Device } };
+        var options = new DialogOptions { FullScreen = true, BackdropClick = false };
+        await DialogService.ShowAsync<web.Components.Dialogs.CanFlashDialog>("Update firmware", parameters, options);
+    }
 }

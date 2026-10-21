@@ -5,6 +5,7 @@
 @using web.Services
 @inject DeviceManager DeviceManager
 @inject NotificationService Notification
+@inject IDialogService DialogService
 @typeparam TDevice where TDevice : domain.Interfaces.IDeviceConfigurable
 
 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
@@ -57,6 +58,18 @@
                        OnClick="@OnEnterBootloaderAsync">
                 Bootloader
             </MudButton>
+            @if (Device is FwDevice { Def.CanBootloader: true } fwDevice)
+            {
+                @* Not gated on Connected: a module left in its bootloader is quiet, and this is how it gets out *@
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Default"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.SystemUpdateAlt"
+                           Disabled="@(!AdapterConnected)"
+                           OnClick="@(() => OpenCanFlashAsync(fwDevice))">
+                    Update firmware
+                </MudButton>
+            }
             <MudButton Variant="Variant.Outlined"
                        Color="Color.Default"
                        Size="Size.Small"
@@ -95,6 +108,13 @@
     
     [Parameter, EditorRequired] public bool AdapterConnected { get; set; }
     
+    private async Task OpenCanFlashAsync(FwDevice device)
+    {
+        var parameters = new DialogParameters<web.Components.Dialogs.CanFlashDialog> { { x => x.Device, device } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, BackdropClick = false };
+        await DialogService.ShowAsync<web.Components.Dialogs.CanFlashDialog>("Update firmware", parameters, options);
+    }
+
     private string DeviceName => Device switch
     {
         FwDevice fw => fw.Def.TypeName,
