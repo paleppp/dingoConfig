@@ -174,14 +174,14 @@
                                         <div class="ign-inline">
                                             <MudSelect T="int" Value="Ign.ButtonByte" ValueChanged="@(b => Ign.ButtonByte = b)"
                                                        Label="Byte" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 90px">
-                                                @for (var b = 0; b < 8; b++)
+                                                @foreach (var b in Enumerable.Range(0, 8))
                                                 {
                                                     <MudSelectItem T="int" Value="b">@b</MudSelectItem>
                                                 }
                                             </MudSelect>
                                             <MudSelect T="int" Value="ButtonBit" ValueChanged="@(b => Ign.ButtonMask = 1 << b)"
                                                        Label="Bit" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 90px">
-                                                @for (var b = 0; b < 8; b++)
+                                                @foreach (var b in Enumerable.Range(0, 8))
                                                 {
                                                     <MudSelectItem T="int" Value="b">@b</MudSelectItem>
                                                 }
