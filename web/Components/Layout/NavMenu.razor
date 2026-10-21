@@ -27,6 +27,12 @@
 
     @if (_devices.Any())
     {
+        <MudNavLink Href="overview"
+                    Icon="@Icons.Material.Filled.Dashboard"
+                    Style="padding-left: 32px;">
+            Overview
+        </MudNavLink>
+
         @foreach (var device in _devices)
         {
             <MudNavLink Href="@($"device/{device.Guid}")"

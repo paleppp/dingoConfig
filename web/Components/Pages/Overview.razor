@@ -1,0 +1,205 @@
+@page "/overview"
+@using application.Services
+@using domain.Devices
+@using domain.Devices.Functions
+@using domain.Enums
+@using domain.Interfaces
+@inject DeviceManager DeviceManager
+@inject ICommsAdapterManager AdapterManager
+@implements IDisposable
+
+<PageTitle>Overview</PageTitle>
+
+@* Every PDM and CANBoard at a glance: whether it is there, its supply and load,
+   and only the outputs and inputs it actually uses *@
+<div class="ov">
+    <div class="ov-summary">
+        <span class="ov-sum"><b>@Online</b> of @_devices.Count online</span>
+        @if (Online > 0)
+        {
+            <span class="ov-sum"><b>@TotalCurrent.ToString("F1")</b> A total</span>
+            @if (LowestBattery is { } low)
+            {
+                <span class="ov-sum">lowest battery <b>@low.ToString("F1")</b> V</span>
+            }
+        }
+        @if (!AdapterManager.IsConnected)
+        {
+            <span class="ov-sum ov-warn">Adapter not connected</span>
+        }
+        <MudSpacer/>
+        <MudSwitch T="bool" @bind-Value="_hideOffline" Color="Color.Primary" Size="Size.Small">Hide offline</MudSwitch>
+    </div>
+
+    @if (_devices.Count == 0)
+    {
+        <div class="ov-empty">No PDMs or CANBoards in the project. Add them under Devices.</div>
+    }
+
+    <div class="ov-grid">
+        @foreach (var device in _devices.Where(d => d.Connected || !_hideOffline))
+        {
+            var outputs = device.Outputs.Where(o => o.Enabled).ToList();
+            var digIn = device.DigitalInputs.Where(i => i.Enabled).ToList();
+            var anIn = device.AnalogInputs.Where(i => i.Enabled).ToList();
+            var digOut = device.DigitalOutputs.Where(o => o.Enabled).ToList();
+            var ign = device.Def.HasIgnition && device.Ignition.Enabled ? device.Ignition : null;
+
+            <article class="ov-card @(device.Connected ? StateClass(device.DeviceState) : "offline")">
+                <a class="ov-head" href="@($"device/{device.Guid}")">
+                    <span class="ov-led"></span>
+                    <span class="ov-name">@device.Name</span>
+                    <span class="ov-type">@device.Def.TypeName · 0x@(device.BaseId.ToString("X3"))</span>
+                    <span class="ov-badge">@(device.Connected ? device.DeviceState.ToString() : "Offline")</span>
+                </a>
+
+                @if (device.Connected)
+                {
+                    <div class="ov-stats">
+                        @if (device.Def.HasBattVoltSense)
+                        {
+                            <span><b>@device.BatteryVoltage.ToString("F1")</b> V</span>
+                        }
+                        @if (device.Outputs.Count > 0)
+                        {
+                            <span><b>@device.TotalCurrent.ToString("F1")</b> A</span>
+                        }
+                        @if (device.Def.HasExtTempSensor)
+                        {
+                            <span><b>@device.BoardTempC.ToString("F0")</b> °C</span>
+                        }
+                        @if (device.Version != "v0.0.0")
+                        {
+                            <span class="ov-muted">@device.Version</span>
+                        }
+                        @if (ign != null)
+                        {
+                            var state = (IgnitionState)ign.State;
+                            <span class="ov-ign @(state == IgnitionState.Off ? "" : "on")">@IgnitionText(state)</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="ov-stats ov-muted">Asleep or not on the bus</div>
+                }
+
+                @if (outputs.Count > 0)
+                {
+                    <div class="ov-outs">
+                        @foreach (var output in outputs)
+                        {
+                            <div class="ov-out @(device.Connected ? OutputClass(output.State) : "")" title="@output.Name">
+                                <span class="ov-led"></span>
+                                <span class="ov-out-name">@output.Name</span>
+                                @if (output.PrimaryOutput >= 0)
+                                {
+                                    <span class="ov-muted ov-amps">with @(output.PrimaryOutput + 1)</span>
+                                }
+                                else
+                                {
+                                    <span class="ov-meter"><i style="width: @(device.Connected ? LoadPercent(output) : 0)%"></i></span>
+                                    <span class="ov-amps">@(device.Connected ? output.Current.ToString("F1") : "–") A</span>
+                                }
+                                @if (device.Connected && output.State is OutState.Overcurrent or OutState.Fault)
+                                {
+                                    <span class="ov-flag">@(output.State == OutState.Fault ? "FAULT" : "OC")</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (digIn.Count + anIn.Count + digOut.Count > 0)
+                {
+                    <div class="ov-sigs">
+                        @foreach (var input in digIn)
+                        {
+                            <span class="ov-sig @(device.Connected && input.State ? "on" : "")" title="Digital input @input.Number">
+                                <span class="ov-led"></span>@input.Name
+                            </span>
+                        }
+                        @foreach (var input in anIn)
+                        {
+                            <span class="ov-sig @(device.Connected && input.Switch.State ? "on" : "")" title="Analog input @input.Number">
+                                <span class="ov-led"></span>@input.Name
+                                <span class="ov-muted">@(device.Connected ? $"{input.Millivolts:F0} mV" : "")</span>
+                            </span>
+                        }
+                        @foreach (var output in digOut)
+                        {
+                            <span class="ov-sig @(device.Connected && output.State ? "on" : "")" title="Digital output @output.Number">
+                                <span class="ov-led"></span>@output.Name
+                            </span>
+                        }
+                    </div>
+                }
+
+                @if (outputs.Count + digIn.Count + anIn.Count + digOut.Count == 0)
+                {
+                    <div class="ov-muted">No outputs or inputs enabled.</div>
+                }
+            </article>
+        }
+    </div>
+</div>
+
+@code {
+    private List<FwDevice> _devices = [];
+    private Timer? _refreshTimer;
+    private bool _hideOffline;
+
+    private int Online => _devices.Count(d => d.Connected);
+    private double TotalCurrent => _devices.Where(d => d.Connected).Sum(d => d.TotalCurrent);
+
+    private double? LowestBattery => _devices
+        .Where(d => d.Connected && d.Def.HasBattVoltSense)
+        .Select(d => (double?)d.BatteryVoltage)
+        .Min();
+
+    protected override void OnInitialized()
+    {
+        Load();
+
+        // Slower than a device page: this one draws every device at once
+        _refreshTimer = new Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                Load();
+                StateHasChanged();
+            });
+        }, null, TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(200));
+    }
+
+    private void Load() => _devices = DeviceManager.GetAllDevices().OfType<FwDevice>().ToList();
+
+    private static double LoadPercent(Output output) =>
+        output.CurrentLimit > 0 ? Math.Clamp(output.Current / output.CurrentLimit * 100, 0, 100) : 0;
+
+    private static string StateClass(DeviceState state) => state switch
+    {
+        DeviceState.Run => "on",
+        DeviceState.OverTemp => "warn",
+        DeviceState.Error => "fault",
+        _ => ""
+    };
+
+    private static string OutputClass(OutState state) => state switch
+    {
+        OutState.On => "on",
+        OutState.Overcurrent => "warn",
+        OutState.Fault => "fault",
+        _ => ""
+    };
+
+    private static string IgnitionText(IgnitionState state) => state switch
+    {
+        IgnitionState.Ignition => "Ignition",
+        IgnitionState.Cranking => "Cranking",
+        IgnitionState.Running => "Running",
+        _ => "Ignition off"
+    };
+
+    public void Dispose() => _refreshTimer?.Dispose();
+}

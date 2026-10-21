@@ -32,6 +32,10 @@
             <MudIcon Icon="@Icons.Material.Outlined.Memory"/>
             <span>Devices</span>
         </a>
+        <a href="overview" class="@Current("overview")">
+            <MudIcon Icon="@Icons.Material.Outlined.Dashboard"/>
+            <span>Overview</span>
+        </a>
         <button type="button" class="@(_menuOpen ? "active" : "")" @onclick="OpenMenu">
             <MudIcon Icon="@Icons.Material.Outlined.Menu"/>
             <span>Menu</span>
@@ -61,6 +65,7 @@
     <div class="m-side-group">
         <a class="m-side-link @Current("")" href=""><MudIcon Icon="@Icons.Material.Outlined.Home"/>Home</a>
         <a class="m-side-link @Current("device")" href="devices"><MudIcon Icon="@Icons.Material.Outlined.Memory"/>Devices</a>
+        <a class="m-side-link @Current("overview")" href="overview"><MudIcon Icon="@Icons.Material.Outlined.Dashboard"/>Overview</a>
         <a class="m-side-link @Current("plot")" href="plot"><MudIcon Icon="@Icons.Material.Outlined.StackedLineChart"/>Plot</a>
         <a class="m-side-link @Current("can-log")" href="can-log"><MudIcon Icon="@Icons.Material.Outlined.Article"/>CAN log</a>
         <a class="m-side-link @Current("system-log")" href="system-log"><MudIcon Icon="@Icons.Material.Outlined.Notes"/>Messages</a>
