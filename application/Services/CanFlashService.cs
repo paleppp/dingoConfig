@@ -95,8 +95,16 @@ public sealed class CanFlashService(
 
         try
         {
-            // A module whose app is running is sent into the bootloader. One that is quiet is
-            // most likely already waiting there after an update that did not finish.
+            // A module whose app is running is sent into the bootloader. One that is quiet may be
+            // between sleeps and back in a moment; if it stays quiet it is most likely already
+            // waiting in its bootloader after an update that did not finish.
+            if (!device.Connected)
+            {
+                Set("Waiting for the module", 3);
+                for (var i = 0; i < 40 && !device.Connected; i++)
+                    await Task.Delay(250, token);
+            }
+
             if (device.Connected)
             {
                 deviceManager.RequestCanUpdate(deviceId);
